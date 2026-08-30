@@ -438,30 +438,29 @@ function fabDate(){
 
 function buildFab(){
   if (document.getElementById("fabWrap")) return;
-  const R = 116;
-  const n = FAB_ACTIONS.length;
   const wrap = document.createElement("div");
   wrap.id = "fabWrap";
   wrap.innerHTML = `
     <div class="fab-scrim" id="fabScrim"></div>
     <div class="fab-menu">
-      ${FAB_ACTIONS.map((a, i) => {
-        const ang = (i / (n - 1)) * (Math.PI / 2);
-        const x = -Math.round(Math.sin(ang) * R);
-        const y = -Math.round(Math.cos(ang) * R);
-        return `<button class="fab-item" data-fab="${a.kind}" style="--x:${x}px;--y:${y}px;--d:${i * 32}ms">
+      ${FAB_ACTIONS.map((a, i) => `
+        <button class="fab-item" data-fab="${a.kind}" style="--i:${i}">
           <span class="fab-item-label">${escapeHtml(t(a.labelKey))}</span>
           <span class="fab-item-ico">${a.ico}</span>
-        </button>`;
-      }).join("")}
+        </button>`).join("")}
     </div>
-    <button class="fab" id="fabBtn" aria-label="Add" aria-haspopup="true">
+    <button class="fab" id="fabBtn" aria-label="${escapeHtml(t("common.add"))}" aria-haspopup="true" aria-expanded="false">
       <span class="fab-plus">+</span>
     </button>`;
   document.body.appendChild(wrap);
 
-  const close = () => wrap.classList.remove("open");
-  wrap.querySelector("#fabBtn").addEventListener("click", () => wrap.classList.toggle("open"));
+  const btn = wrap.querySelector("#fabBtn");
+  const setOpen = (v) => {
+    wrap.classList.toggle("open", v);
+    btn.setAttribute("aria-expanded", v ? "true" : "false");
+  };
+  const close = () => setOpen(false);
+  btn.addEventListener("click", () => setOpen(!wrap.classList.contains("open")));
   wrap.querySelector("#fabScrim").addEventListener("click", close);
   wrap.querySelector(".fab-menu").addEventListener("click", (e) => {
     const b = e.target.closest("[data-fab]");

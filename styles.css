@@ -1218,7 +1218,7 @@ main{
 .agenda-detail-head{ font-weight: 700; font-size: 16px; margin-bottom: 10px; }
 
 /* ============================================================
-   RADIAL "+" FAB
+   "+" SPEED-DIAL  (vertical fan of labelled actions)
    ============================================================ */
 #fabWrap{
   position: fixed;
@@ -1229,15 +1229,15 @@ main{
 .fab-scrim{
   position: fixed;
   inset: 0;
-  background: rgba(30,28,26,0);
+  background: rgba(20,18,16,0);
   pointer-events: none;
   transition: background .2s ease;
   z-index: -1;
 }
 #fabWrap.open .fab-scrim{
-  background: rgba(30,28,26,0.32);
+  background: rgba(20,18,16,0.42);
   pointer-events: auto;
-  backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(2px);
 }
 .fab{
   width: 58px; height: 58px;
@@ -1258,47 +1258,58 @@ main{
 .fab-plus{ font-size: 30px; line-height: 1; transition: transform .25s ease; }
 #fabWrap.open .fab{ background: var(--accent-ink); }
 #fabWrap.open .fab-plus{ transform: rotate(135deg); }
-.fab-menu{ position: absolute; right: 5px; bottom: 5px; }
-.fab-item{
+
+.fab-menu{
   position: absolute;
-  right: 0; bottom: 0;
+  right: 3px;
+  bottom: calc(100% + 14px);
+  display: flex;
+  flex-direction: column-reverse;   /* first action closest to the +  */
+  align-items: flex-end;
+  gap: 12px;
+}
+.fab-item{
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border: none;
   background: none;
+  padding: 0;
   cursor: pointer;
-  transform: translate(0,0) scale(.3);
   opacity: 0;
+  transform: translateY(14px) scale(.85);
   pointer-events: none;
-  transition: transform .3s cubic-bezier(.2,.9,.3,1.35), opacity .18s ease;
+  transition: opacity .16s ease, transform .24s cubic-bezier(.2,.9,.3,1.35);
   transition-delay: 0ms;
 }
 #fabWrap.open .fab-item{
-  transform: translate(var(--x), var(--y)) scale(1);
   opacity: 1;
+  transform: none;
   pointer-events: auto;
-  transition-delay: var(--d);
+  transition-delay: calc(var(--i) * 34ms);
 }
 .fab-item-ico{
-  width: 46px; height: 46px;
+  width: 48px; height: 48px;
   border-radius: 50%;
   background: var(--card);
+  border: 1px solid var(--line);
   box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 21px;
   flex-shrink: 0;
 }
+.fab-item:active .fab-item-ico{ transform: scale(.92); }
 .fab-item-label{
-  order: -1;
-  background: var(--text-dark);
-  color: #fff;
-  font-size: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--text-dark);
+  font-size: 13px;
   font-weight: 600;
-  padding: 5px 10px;
+  padding: 7px 13px;
   border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
   white-space: nowrap;
 }
 
