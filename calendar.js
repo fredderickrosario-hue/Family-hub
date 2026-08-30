@@ -22,13 +22,25 @@ const cap = (s) => String(s || "").replace(/^./, (c) => c.toUpperCase());
 let root;
 
 const VIEWS = ["month", "week", "day", "agenda"];
-const nextView = () => VIEWS[(VIEWS.indexOf(state.calView) + 1) % VIEWS.length];
+
+let dialOpen = false;
+function setDial(v){
+  dialOpen = v;
+  const d = root && root.querySelector(".cal-viewdial");
+  if (d) d.classList.toggle("open", v);
+}
 
 /* ---------- Init ---------- */
 export function initCalendar(){
   root = document.getElementById("calRoot");
   buildFab();
   root.addEventListener("click", onRootClick);
+
+  // close the view dial when clicking anywhere outside it
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".cal-viewdial")) return;
+    if (dialOpen) setDial(false);
+  });
 
   let rz;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 200); });
@@ -112,6 +124,7 @@ function render(){
                      monthView();
 
   root.innerHTML = toolbar() + `<div class="cal-body cal-${v}">${view}</div>`;
+  if (dialOpen) root.querySelector(".cal-viewdial")?.classList.add("open");
 
   setLed("ledMain",
     itemsForDate(todayISO()).some(i => i.kind === "event" || i.kind === "gcal"),
@@ -122,17 +135,22 @@ function render(){
 
 function toolbar(){
   const on = gcalEnabled();
+  const others = VIEWS.filter(v => v !== state.calView);
   return `
     <div class="cal-toolbar">
-      <button class="cal-view-btn" data-cycle title="→ ${escapeHtml(t("cal." + nextView()))}">
-        ${escapeHtml(t("cal." + state.calView))}<span class="cvb-caret">▾</span>
-      </button>
+      <span class="cal-title">${escapeHtml(t("nav.calendar"))}</span>
       <div class="cal-period">
         <button class="cal-step" data-step="-1" aria-label="Previous">‹</button>
-        <span class="cal-period-label">${escapeHtml(periodLabel())}</span>
+        <button class="cal-period-label" data-step="0" title="${escapeHtml(t("common.today"))}">${escapeHtml(periodLabel())}</button>
         <button class="cal-step" data-step="1" aria-label="Next">›</button>
       </div>
       <button class="cal-step cal-today-btn" data-step="0">${escapeHtml(t("common.today"))}</button>
+      <div class="cal-viewdial">
+        <div class="cal-viewdial-menu">
+          ${others.map((v) => `<button class="vd-opt" data-view="${v}">${escapeHtml(t("cal." + v))}</button>`).join("")}
+        </div>
+        <button class="cal-viewdial-btn" data-viewdial>${escapeHtml(t("cal." + state.calView))}<span class="vd-caret">▾</span></button>
+      </div>
       <button class="cal-sync-mini${on ? " on" : ""}" data-sync title="Google Calendar">${on ? "✓" : "🔗"}</button>
     </div>`;
 }
@@ -307,8 +325,14 @@ function goToDay(dISO){
 }
 
 function onRootClick(e){
-  if (e.target.closest("[data-cycle]")){ setCalView(nextView()); render(); return; }
+  if (e.target.closest("[data-viewdial]")){ setDial(!dialOpen); return; }
+
+  const vdOpt = e.target.closest(".vd-opt");
+  if (vdOpt){ setDial(false); setCalView(vdOpt.dataset.view); render(); return; }
+
   if (e.target.closest("[data-sync]")){ openGcalSettings(render); return; }
+
+  if (dialOpen) setDial(false);
 
   const step = e.target.closest("[data-step]");
   if (step){ doStep(Number(step.dataset.step)); return; }

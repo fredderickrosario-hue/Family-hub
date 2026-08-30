@@ -998,32 +998,21 @@ main{
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin: 4px 0 10px;
   flex-shrink: 0;
 }
-.cal-view-btn{
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid var(--line-strong);
-  background: var(--card);
-  border-radius: var(--radius-pill);
-  padding: 0 12px;
-  height: 36px;
-  font-size: 13px;
+.cal-title{
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text-dark);
-  cursor: pointer;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.cal-view-btn:active{ transform: translateY(1px); }
-.cvb-caret{ font-size: 11px; color: var(--text-soft); }
 .cal-period{
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   flex: 1;
   justify-content: center;
   min-width: 0;
@@ -1032,7 +1021,7 @@ main{
   border: 1px solid var(--line);
   background: var(--card);
   border-radius: 9px;
-  min-width: 34px;
+  min-width: 32px;
   height: 36px;
   font-size: 17px;
   cursor: pointer;
@@ -1044,18 +1033,84 @@ main{
 }
 .cal-step:active{ transform: translateY(1px); }
 .cal-today-btn{
+  display: none;                /* phone: tap the date label to jump to today */
   padding: 0 10px;
   font-size: 12px;
   font-weight: 700;
 }
 .cal-period-label{
+  border: none;
+  background: none;
+  color: var(--text-dark);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13.5px;
   text-align: center;
+  padding: 4px 3px;
+  border-radius: 8px;
+  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.cal-period-label:active{ background: var(--bg-2); }
+
+/* horizontal view speed-dial */
+.cal-viewdial{ position: relative; flex-shrink: 0; }
+.cal-viewdial-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line-strong);
+  background: var(--card);
+  border-radius: var(--radius-pill);
+  padding: 0 10px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cal-viewdial-btn:active{ transform: translateY(1px); }
+.vd-caret{ font-size: 11px; color: var(--text-soft); transition: transform .2s ease; }
+.cal-viewdial.open .vd-caret{ transform: rotate(180deg); }
+.cal-viewdial-menu{
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  display: flex;
+  gap: 2px;
+  z-index: 6;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-50%) translateX(10px) scale(.96);
+  transform-origin: right center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .14s ease, transform .2s cubic-bezier(.2,.9,.3,1.3);
+}
+.cal-viewdial.open .cal-viewdial-menu{
+  transform: translateY(-50%);
+  opacity: 1;
+  pointer-events: auto;
+}
+.vd-opt{
+  border: none;
+  background: none;
+  border-radius: var(--radius-pill);
+  padding: 0 13px;
+  height: 34px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vd-opt:hover{ background: var(--bg-2); color: var(--text-dark); }
+.vd-opt:active{ transform: translateY(1px); }
 .cal-sync-mini{
   display: none;                 /* phone: manage sync from Settings */
   width: 36px; height: 36px;
@@ -1586,10 +1641,12 @@ main{
   .modal{ border-radius: var(--radius-lg); }
 
   /* ---- Calendar, wide ---- */
-  .cal-view-btn{ font-size: 15px; padding: 0 16px; height: 42px; }
+  .cal-toolbar{ gap: 8px; }
+  .cal-title{ font-size: 22px; }
+  .cal-viewdial-btn, .vd-opt{ font-size: 15px; padding: 0 16px; height: 42px; }
   .cal-period-label{ font-size: 18px; }
   .cal-step{ min-width: 42px; height: 42px; font-size: 20px; }
-  .cal-today-btn{ font-size: 14px; padding: 0 14px; }
+  .cal-today-btn{ display: inline-flex; font-size: 14px; padding: 0 14px; }
   .cal-sync-mini{ display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; font-size: 16px; }
 
   .mgrid-dow > div{ font-size: 12px; }
