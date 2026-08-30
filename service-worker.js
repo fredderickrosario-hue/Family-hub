@@ -1,5 +1,5 @@
 // Bump this on every deploy so devices pick up the new shell.
-const CACHE_NAME = "family-hub-v4";
+const CACHE_NAME = "family-hub-v5";
 
 const SHELL_FILES = [
   "./",
@@ -10,6 +10,8 @@ const SHELL_FILES = [
   "./state.js",
   "./ui.js",
   "./app.js",
+  "./calendar.js",
+  "./weather.js",
   "./chores.js",
   "./budget.js",
   "./meals.js",

@@ -38,7 +38,7 @@ function onKeydown(e){ if (e.key === "Escape") closeModal(); }
  * types: text | number | date | time | textarea | select | checkbox | color | swatch
  */
 export function openModal({ title, submitLabel = "Save", deleteLabel = "Delete",
-                            onSubmit, onDelete, fields = [] }){
+                            onSubmit, onDelete, fields = [], body = "" }){
   closeModal();
 
   const backdrop = document.createElement("div");
@@ -53,6 +53,13 @@ export function openModal({ title, submitLabel = "Save", deleteLabel = "Delete",
     </div>`;
 
   const form = backdrop.querySelector(".modal-form");
+
+  if (body){
+    const b = document.createElement("div");
+    b.className = "modal-body-text";
+    b.innerHTML = body;              // caller is responsible for escaping
+    form.appendChild(b);
+  }
 
   fields.forEach(f => form.appendChild(buildField(f)));
 

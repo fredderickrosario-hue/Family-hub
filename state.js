@@ -12,7 +12,8 @@ export { db, collection, addDoc, updateDoc, deleteDoc, doc };
 
 /* ---------- State ---------- */
 export const state = {
-  viewDate: new Date(),      // month shown in the calendar grid
+  viewDate: new Date(),      // calendar cursor (month/week/day pivot)
+  calView: localStorage.getItem("familyhub.calView") || "month", // month|week|day|agenda
   selectedDateISO: null,     // day open in the day sheet
   events: [],                // {id, title, date, time, notes}
   chores: [],                // {id, title, assignee, isKidChore, points, dueDate,
@@ -52,6 +53,21 @@ export function addDays(dateISO, n){
   const d = parseISO(dateISO);
   d.setDate(d.getDate() + n);
   return iso(d);
+}
+export function addDaysD(date, n){
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+export function startOfWeek(date){
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+export function setCalView(v){
+  state.calView = v;
+  try { localStorage.setItem("familyhub.calView", v); } catch {}
 }
 export function fmtDayLabel(dateISO){
   const d = parseISO(dateISO);

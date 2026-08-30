@@ -17,7 +17,10 @@
   <header class="hub-header">
     <div class="hub-header-main">
       <h1>Family Hub</h1>
-      <span class="date-readout" id="headerDate">--</span>
+      <div class="hub-header-right">
+        <button class="weather" id="weatherBtn" aria-label="Weather"><span class="wx-ico">🌡️</span></button>
+        <span class="date-readout" id="headerDate">--</span>
+      </div>
     </div>
   </header>
 
@@ -61,25 +64,7 @@
         <h2>Calendar</h2>
         <button class="btn-add" id="gcalBtn"><span class="plus">🔗</span> Sync</button>
       </div>
-      <div class="card">
-        <div class="cal-nav">
-          <button id="calPrev" aria-label="Previous month">‹</button>
-          <span class="cal-month-label" id="calMonthLabel">--</span>
-          <button id="calNext" aria-label="Next month">›</button>
-        </div>
-        <div class="cal-grid" id="calDow"></div>
-        <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
-      </div>
-      <div class="card" style="margin-top:12px;">
-        <div class="section-title" style="margin:0 0 10px;">Legend</div>
-        <div style="display:flex;flex-wrap:wrap;gap:14px;">
-          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot evt"></span>Event</span>
-          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot gcal"></span>Google Calendar</span>
-          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot chore"></span>Chore due</span>
-          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot meal"></span>Meal planned</span>
-          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot budget"></span>Budget due</span>
-        </div>
-      </div>
+      <div id="calRoot"></div>
     </section>
 
     <!-- Tab panels populated by their modules -->
@@ -90,23 +75,6 @@
     <section class="panel" id="panel-family"></section>
   </main>
 
-</div>
-
-<!-- Day detail bottom sheet -->
-<div class="sheet-backdrop" id="sheetBackdrop">
-  <div class="sheet" role="dialog" aria-modal="true" aria-label="Day details">
-    <div class="sheet-grip"></div>
-    <div class="sheet-header">
-      <h2 id="sheetDateLabel">--</h2>
-      <button class="sheet-close" id="sheetClose" aria-label="Close">&times;</button>
-    </div>
-    <div id="sheetEntries"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-      <button class="btn-add" data-add="event"><span class="plus">+</span> Event</button>
-      <button class="btn-add" data-add="chore"><span class="plus">+</span> Chore</button>
-      <button class="btn-add" data-add="meal"><span class="plus">+</span> Meal</button>
-    </div>
-  </div>
 </div>
 
 <script type="module" src="firebase-config.js"></script>

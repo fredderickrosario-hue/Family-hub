@@ -89,9 +89,10 @@ function onClick(e){
   }
 }
 
-function openBudgetForm(entry){
+export function openBudgetForm(entry){
+  const editing = !!(entry && entry.id);
   openModal({
-    title: entry ? "Edit entry" : "New budget entry",
+    title: editing ? "Edit entry" : "New budget entry",
     fields: [
       { name: "party", label: "Who / what", type: "text", required: true, value: entry?.party || "",
         placeholder: "Client, vendor, bill…" },
@@ -103,13 +104,13 @@ function openBudgetForm(entry){
         options: [{ value: "pending", label: "Pending" }, { value: "completed", label: "Completed" }] },
       { name: "notes", label: "Notes", type: "text", value: entry?.notes || "" }
     ],
-    onDelete: entry ? async () => { await remove("budgetEntries", entry.id); toast("Entry deleted"); } : null,
+    onDelete: editing ? async () => { await remove("budgetEntries", entry.id); toast("Entry deleted"); } : null,
     onSubmit: async (d) => {
       const payload = {
         party: d.party, amount: Number(d.amount) || 0, type: d.type,
         date: d.date, status: d.status, notes: d.notes || ""
       };
-      if (entry) await update("budgetEntries", entry.id, payload);
+      if (editing) await update("budgetEntries", entry.id, payload);
       else await add("budgetEntries", payload);
       toast("Saved");
     }

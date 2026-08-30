@@ -270,14 +270,15 @@ function openRewardForm(r){
 }
 
 /* ---------- Chore form ---------- */
-function openChoreForm(c){
+export function openChoreForm(c){
+  const editing = !!(c && c.id);
   const profileOpts = [{ value: "", label: "Unassigned" }]
     .concat(state.profiles.map(p => ({ value: p.id, label: p.name })));
   const recurOpts = ["never", "daily", "weekly", "monthly"]
     .map(v => ({ value: v, label: v.replace(/^./, s => s.toUpperCase()) }));
 
   openModal({
-    title: c ? "Edit chore" : "New chore",
+    title: editing ? "Edit chore" : "New chore",
     fields: [
       { name: "title", label: "Chore", type: "text", required: true, value: c?.title || "" },
       { name: "assignee", label: "Assigned to", type: "select", options: profileOpts, value: c?.assignee || "" },
@@ -287,7 +288,7 @@ function openChoreForm(c){
       { name: "recurring", label: "Repeats", type: "select", options: recurOpts, value: c?.recurring || "never",
         hint: "Weekly repeats on the due date's weekday" }
     ],
-    onDelete: c ? async () => { await remove("chores", c.id); toast("Chore deleted"); } : null,
+    onDelete: editing ? async () => { await remove("chores", c.id); toast("Chore deleted"); } : null,
     onSubmit: async (d) => {
       const payload = {
         title: d.title,
@@ -298,7 +299,7 @@ function openChoreForm(c){
         recurring: d.recurring || "never",
         recurrenceDays: d.recurring === "weekly" ? [parseISO(d.dueDate).getDay()] : []
       };
-      if (c){
+      if (editing){
         await update("chores", c.id, payload);
       } else {
         await add("chores", { ...payload, completed: false, completedAt: null, completionDate: null });

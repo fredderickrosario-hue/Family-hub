@@ -126,7 +126,7 @@ function onTodayClick(e){
   else openMealForm(m.date, m.mealType, m);
 }
 
-function openMealForm(date, type, m){
+export function openMealForm(date, type, m){
   openModal({
     title: m ? "Edit meal" : "Plan meal",
     fields: [
