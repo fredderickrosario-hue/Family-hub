@@ -21,14 +21,14 @@ const cap = (s) => String(s || "").replace(/^./, (c) => c.toUpperCase());
 
 let root;
 
+const VIEWS = ["month", "week", "day", "agenda"];
+const nextView = () => VIEWS[(VIEWS.indexOf(state.calView) + 1) % VIEWS.length];
+
 /* ---------- Init ---------- */
 export function initCalendar(){
   root = document.getElementById("calRoot");
   buildFab();
   root.addEventListener("click", onRootClick);
-
-  const syncBtn = document.getElementById("gcalBtn");
-  if (syncBtn) syncBtn.addEventListener("click", () => openGcalSettings(render));
 
   let rz;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 200); });
@@ -113,15 +113,6 @@ function render(){
 
   root.innerHTML = toolbar() + `<div class="cal-body cal-${v}">${view}</div>`;
 
-  const syncBtn = document.getElementById("gcalBtn");
-  if (syncBtn){
-    const on = gcalEnabled();
-    syncBtn.classList.toggle("synced", on);
-    syncBtn.innerHTML = on
-      ? `<span class="plus">✓</span> ${escapeHtml(t("cal.synced"))}`
-      : `<span class="plus">🔗</span> ${escapeHtml(t("cal.sync"))}`;
-  }
-
   setLed("ledMain",
     itemsForDate(todayISO()).some(i => i.kind === "event" || i.kind === "gcal"),
     "var(--info)");
@@ -130,18 +121,19 @@ function render(){
 }
 
 function toolbar(){
-  const views = ["month", "week", "day", "agenda"];
+  const on = gcalEnabled();
   return `
     <div class="cal-toolbar">
-      <div class="cal-views">
-        ${views.map(v => `<button class="cal-view-btn${state.calView === v ? " active" : ""}" data-view="${v}">${escapeHtml(t("cal." + v))}</button>`).join("")}
-      </div>
+      <button class="cal-view-btn" data-cycle title="→ ${escapeHtml(t("cal." + nextView()))}">
+        ${escapeHtml(t("cal." + state.calView))}<span class="cvb-caret">▾</span>
+      </button>
       <div class="cal-period">
         <button class="cal-step" data-step="-1" aria-label="Previous">‹</button>
-        <button class="cal-step cal-today-btn" data-step="0">${escapeHtml(t("common.today"))}</button>
         <span class="cal-period-label">${escapeHtml(periodLabel())}</span>
         <button class="cal-step" data-step="1" aria-label="Next">›</button>
       </div>
+      <button class="cal-step cal-today-btn" data-step="0">${escapeHtml(t("common.today"))}</button>
+      <button class="cal-sync-mini${on ? " on" : ""}" data-sync title="Google Calendar">${on ? "✓" : "🔗"}</button>
     </div>`;
 }
 
@@ -155,7 +147,7 @@ function periodLabel(){
       ? `${e.getDate()}` : `${MONTHS[e.getMonth()].slice(0, 3)} ${e.getDate()}`;
     return `${a} – ${b}`;
   }
-  return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  return `${MONTHS[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
 }
 
 function doStep(dir){
@@ -180,7 +172,7 @@ function monthView(){
   const first = (new Date(y, m, 1).getDay() - ws + 7) % 7;
   const dim = new Date(y, m + 1, 0).getDate();
   const today = todayISO();
-  const maxChips = window.matchMedia("(min-width: 768px)").matches ? 3 : 2;
+  const maxChips = window.matchMedia("(min-width: 768px)").matches ? 4 : 3;
 
   let cells = "";
   for (let i = 0; i < first; i++) cells += `<div class="mcell empty"></div>`;
@@ -315,8 +307,8 @@ function goToDay(dISO){
 }
 
 function onRootClick(e){
-  const viewBtn = e.target.closest(".cal-view-btn");
-  if (viewBtn){ setCalView(viewBtn.dataset.view); render(); return; }
+  if (e.target.closest("[data-cycle]")){ setCalView(nextView()); render(); return; }
+  if (e.target.closest("[data-sync]")){ openGcalSettings(render); return; }
 
   const step = e.target.closest("[data-step]");
   if (step){ doStep(Number(step.dataset.step)); return; }

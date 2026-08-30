@@ -1,5 +1,5 @@
 // Bump this on every deploy so devices pick up the new shell.
-const CACHE_NAME = "family-hub-v7";
+const CACHE_NAME = "family-hub-v8";
 
 const SHELL_FILES = [
   "./",
