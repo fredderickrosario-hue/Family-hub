@@ -12,7 +12,7 @@ import {
   gcalListCalendars, selectedCals, setSelectedCals
 } from "./gcal.js";
 
-const APP_VERSION = "10";                 // keep in step with service-worker CACHE_NAME
+const APP_VERSION = "11";                 // keep in step with service-worker CACHE_NAME
 
 let panel;
 let calList = null;                       // cached calendar list from the relay

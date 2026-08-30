@@ -1291,7 +1291,9 @@ main{
 
 /* ---- Agenda dashboard ---- */
 .agenda{ display: flex; flex-direction: column; gap: 12px; }
-.agenda-side{ padding: 12px; }
+.agenda-side{ padding: 10px; }
+.agenda-side .mini-day{ aspect-ratio: 1 / 0.68; font-size: 11px; border-radius: 6px; }
+.agenda-side .mini-dot{ bottom: 2px; width: 3px; height: 3px; }
 .agenda-main{ display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .agenda-day{ font-size: 15px; font-weight: 700; padding: 2px 2px 0; }
 .agenda-widgets{ display: grid; grid-template-columns: 1fr; gap: 12px; }
@@ -1731,12 +1733,12 @@ main{
 
   .agenda{ flex-direction: row; align-items: flex-start; }
   .agenda-side{ flex: 0 0 320px; position: sticky; top: 0; }
+  .agenda-side .mini-day{ aspect-ratio: 1; font-size: 14px; border-radius: 7px; }
   .agenda-main{ flex: 1; }
   .agenda-day{ font-size: 20px; }
   .agenda-widgets{ grid-template-columns: 1fr 1fr; }
   .widget-head{ font-size: 15px; }
   .wrow .crow-title{ font-size: 15px; }
-  .mini-day{ font-size: 15px; }
 
   #fabWrap{ right: 30px; bottom: 30px; }
   .fab{ width: 64px; height: 64px; }
