@@ -1,12 +1,12 @@
 /* ============================================================
    FAMILY HUB — Google Calendar sync (READ-ONLY)
-   Browsers can't read a private Google Calendar directly, so a
-   tiny Apps Script web app relays it as JSON. See apps-script/.
-   Config (relay URL + shared token) lives in localStorage per
-   device — it never touches the open Firestore database.
+   A tiny Apps Script web app relays the calendar(s) as JSON.
+   Config (relay URL + shared token + which calendars) lives in
+   localStorage per device — never in the open Firestore.
    ============================================================ */
 import { state } from "./state.js";
 import { openModal, toast } from "./ui.js";
+import { t } from "./i18n.js";
 
 const LS_KEY = "familyhub.gcal";
 
@@ -18,8 +18,21 @@ export function gcalEnabled(){
   const c = gcalConfig();
   return !!(c && c.url && c.token);
 }
-function saveConfig(c){ localStorage.setItem(LS_KEY, JSON.stringify(c)); }
-function clearConfig(){ localStorage.removeItem(LS_KEY); }
+export function saveGcalConfig(patch){
+  saveConfig({ ...(gcalConfig() || {}), ...patch });
+  bustGcalCache();
+}
+function saveConfig(c){ try { localStorage.setItem(LS_KEY, JSON.stringify(c)); } catch {} }
+function clearConfig(){ try { localStorage.removeItem(LS_KEY); } catch {} }
+
+/** ids of calendars to sync; empty array / undefined = all */
+export function selectedCals(){
+  const c = gcalConfig();
+  return Array.isArray(c?.cals) ? c.cals : null;
+}
+export function setSelectedCals(ids){
+  saveGcalConfig({ cals: ids });
+}
 
 let cache = { key: "", ts: 0, inflight: null };
 export function bustGcalCache(){ cache = { key: "", ts: 0, inflight: null }; }
@@ -32,15 +45,17 @@ export async function gcalFetchMonth(viewDate){
     return false;
   }
   const y = viewDate.getFullYear(), m = viewDate.getMonth();
-  const key = `${y}-${m}`;
+  const sel = selectedCals();
+  const key = `${y}-${m}|${(sel || []).join(",")}`;
   if (cache.key === key && Date.now() - cache.ts < 120000) return false;
   if (cache.inflight) return cache.inflight;
 
   const c = gcalConfig();
   const start = new Date(y, m - 1, 15).toISOString();
   const end   = new Date(y, m + 2, 15).toISOString();
-  const url = `${c.url}?token=${encodeURIComponent(c.token)}` +
-             `&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+  let url = `${c.url}?token=${encodeURIComponent(c.token)}` +
+            `&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+  if (sel && sel.length) url += `&cals=${encodeURIComponent(sel.join(","))}`;
 
   cache.inflight = fetch(url)
     .then(r => r.json())
@@ -58,6 +73,23 @@ export async function gcalFetchMonth(viewDate){
   return cache.inflight;
 }
 
+async function relayGet(params){
+  const c = gcalConfig();
+  if (!c || !c.url) throw new Error("not configured");
+  const q = new URLSearchParams({ token: c.token, ...params }).toString();
+  const r = await fetch(`${c.url}?${q}`);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d;
+}
+
+/* List the calendars the Google account can see (needs relay v2). */
+export async function gcalListCalendars(){
+  const d = await relayGet({ list: "1" });
+  if (!Array.isArray(d.calendars)) throw new Error("This relay is v1 — redeploy calendar-relay.gs to pick calendars");
+  return d.calendars;   // [{ id, name, color, primary }]
+}
+
 async function testRelay(url, token){
   const q = `?token=${encodeURIComponent(token)}` +
             `&start=${new Date().toISOString()}` +
@@ -69,12 +101,11 @@ async function testRelay(url, token){
   return d.events.length;
 }
 
-/* Settings modal. onDone() is called after connect/disconnect so the
-   caller can refresh the calendar. */
+/* Relay connect / disconnect modal. */
 export function openGcalSettings(onDone){
   const c = gcalConfig() || {};
   openModal({
-    title: gcalEnabled() ? "Google Calendar sync" : "Connect Google Calendar",
+    title: gcalEnabled() ? t("set.reconfigure") : t("set.connect_gcal"),
     submitLabel: "Test & connect",
     deleteLabel: "Disconnect",
     fields: [
@@ -96,7 +127,7 @@ export function openGcalSettings(onDone){
       let n;
       try { n = await testRelay(url, d.token); }
       catch (err){ throw new Error(`Couldn't reach the relay — check the URL and token (${err.message})`); }
-      saveConfig({ url, token: d.token });
+      saveConfig({ ...(gcalConfig() || {}), url, token: d.token });
       bustGcalCache();
       toast(n === 0 ? "Connected — no events in range yet" : `Connected — found ${n} event${n === 1 ? "" : "s"}`);
       onDone && onDone();

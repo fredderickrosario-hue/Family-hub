@@ -4,6 +4,7 @@
    less markup and behaves consistently.
    ============================================================ */
 import { escapeHtml } from "./state.js";
+import { t } from "./i18n.js";
 
 /* ---------- Toast ---------- */
 let toastTimer;
@@ -37,8 +38,10 @@ function onKeydown(e){ if (e.key === "Escape") closeModal(); }
  * field: { name, label, type, value, options, required, placeholder, min, step, hint }
  * types: text | number | date | time | textarea | select | checkbox | color | swatch
  */
-export function openModal({ title, submitLabel = "Save", deleteLabel = "Delete",
+export function openModal({ title, submitLabel, deleteLabel,
                             onSubmit, onDelete, fields = [], body = "" }){
+  submitLabel = submitLabel || t("common.save");
+  deleteLabel = deleteLabel || t("common.delete");
   closeModal();
 
   const backdrop = document.createElement("div");
@@ -73,7 +76,7 @@ export function openModal({ title, submitLabel = "Save", deleteLabel = "Delete",
     del.addEventListener("click", async () => {
       del.disabled = true;
       try { await onDelete(); closeModal(); }
-      catch (err){ console.error(err); toast("Couldn't delete"); del.disabled = false; }
+      catch (err){ console.error(err); toast(err && err.message ? err.message : t("common.error")); del.disabled = false; }
     });
     actions.appendChild(del);
   }
@@ -104,7 +107,7 @@ export function openModal({ title, submitLabel = "Save", deleteLabel = "Delete",
     try { await onSubmit(data); closeModal(); }
     catch (err){
       console.error(err);
-      toast(err && err.message ? err.message : "Something went wrong");
+      toast(err && err.message ? err.message : t("common.error"));
       submit.disabled = false;
     }
   });

@@ -9,6 +9,7 @@ import {
   escapeHtml, profileById, profileColor
 } from "./state.js";
 import { openModal, toast, confirmAction } from "./ui.js";
+import { t } from "./i18n.js";
 import { setLed } from "./app.js";
 
 let panel;
@@ -17,17 +18,17 @@ export function initChores(){
   panel = document.getElementById("panel-chores");
   panel.innerHTML = `
     <div class="panel-head">
-      <h2>Chores</h2>
-      <button class="btn-add" id="choreAdd"><span class="plus">+</span> Chore</button>
+      <h2>${escapeHtml(t("chores.title"))}</h2>
+      <button class="btn-add" id="choreAdd"><span class="plus">+</span> ${escapeHtml(t("chores.add"))}</button>
     </div>
     <div id="choreSections"></div>
 
-    <div class="section-title">Scoreboard</div>
+    <div class="section-title">${escapeHtml(t("chores.scoreboard"))}</div>
     <div class="scoreboard" id="choreScore"></div>
 
     <div class="section-title">
-      Rewards
-      <button class="btn-sm btn-ghost" id="rewardAdd" style="margin-left:auto;">+ Reward</button>
+      ${escapeHtml(t("chores.rewards"))}
+      <button class="btn-sm btn-ghost" id="rewardAdd" style="margin-left:auto;">${escapeHtml(t("chores.add_reward"))}</button>
     </div>
     <div class="card-list" id="rewardList"></div>
   `;
@@ -122,12 +123,12 @@ function render(){
   const sections = [];
 
   if (overdue.length)
-    sections.push(section("Overdue", overdue, true));
-  sections.push(section("Due Today", dueToday, false, "Nothing due today — nice."));
+    sections.push(section(t("chores.overdue"), overdue, true));
+  sections.push(section(t("chores.due_today"), dueToday, false, t("chores.none_today")));
   if (upcoming.length)
-    sections.push(section("Upcoming", upcoming.slice(0, 30)));
+    sections.push(section(t("chores.upcoming"), upcoming.slice(0, 30)));
   if (completed.length)
-    sections.push(section("Completed", completed.slice(0, 20)));
+    sections.push(section(t("chores.completed"), completed.slice(0, 20)));
 
   panel.querySelector("#choreSections").innerHTML = sections.join("");
   renderScoreboard();
@@ -158,9 +159,9 @@ function choreRow({ c, doneToday }){
         <div class="chore-sub">
           ${p ? `<span class="assignee-name" style="--chip-color:${p.color}">${escapeHtml(p.name)}</span>` : ""}
           ${c.dueDate ? `<span class="chore-due ${overdue ? "overdue" : ""}">${escapeHtml(relativeDay(c.dueDate))}</span>` : ""}
-          ${c.isKidChore && c.points ? `<span class="badge points">${c.points} pt${c.points === 1 ? "" : "s"}</span>` : ""}
-          ${isRecurring(c) ? `<span class="badge recur">↻ ${escapeHtml(c.recurring)}</span>` : ""}
-          ${doneToday ? `<span class="badge done-today">Done today</span>` : ""}
+          ${c.isKidChore && c.points ? `<span class="badge points">${escapeHtml(t("chores.points", { n: c.points }))}</span>` : ""}
+          ${isRecurring(c) ? `<span class="badge recur">↻ ${escapeHtml(t("repeat." + c.recurring))}</span>` : ""}
+          ${doneToday ? `<span class="badge done-today">${escapeHtml(t("chores.done_today"))}</span>` : ""}
         </div>
       </div>
       <span class="row-edit" aria-hidden="true">✏️</span>
@@ -175,7 +176,7 @@ function onSectionClick(e){
   if (e.target.closest(".check")){
     const btn = e.target.closest(".check");
     if (btn && !btn.classList.contains("checked")) btn.classList.add("checked"); // instant feedback
-    toggleChore(c).catch(() => toast("Couldn't update chore"));
+    toggleChore(c).catch(() => toast(t("common.error")));
   } else {
     // tap anywhere else on the row to edit (assignee, points, due date, repeat)
     openChoreForm(c);
@@ -187,7 +188,7 @@ function renderScoreboard(){
   const kids = state.profiles.filter(p => p.isKid);
   const el = panel.querySelector("#choreScore");
   if (!kids.length){
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1;">Add kid profiles in the Family tab to track points.</div>`;
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1;">${escapeHtml(t("chores.need_kids"))}</div>`;
     return;
   }
   el.innerHTML = kids
@@ -197,7 +198,7 @@ function renderScoreboard(){
       <div class="score-card" style="--chip-color:${p.color}">
         <div class="score-name">${escapeHtml(p.name)}</div>
         <div class="score-pts">${p.points || 0}</div>
-        <div class="score-lbl">points</div>
+        <div class="score-lbl">${escapeHtml(t("chores.f_points"))}</div>
       </div>`).join("");
 }
 
@@ -205,7 +206,7 @@ function renderScoreboard(){
 function renderRewards(){
   const el = panel.querySelector("#rewardList");
   if (!state.rewards.length){
-    el.innerHTML = `<div class="empty">No rewards yet. Add screen time, dessert, allowance…</div>`;
+    el.innerHTML = `<div class="empty">${escapeHtml(t("chores.no_rewards"))}</div>`;
     return;
   }
   el.innerHTML = state.rewards
@@ -215,11 +216,11 @@ function renderRewards(){
       <div class="reward-row" data-id="${r.id}">
         <div>
           <div style="font-weight:600;">${escapeHtml(r.name)}</div>
-          <div class="reward-cost">${r.cost || 0} points</div>
+          <div class="reward-cost">${escapeHtml(t("chores.points", { n: r.cost || 0 }))}</div>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm btn-primary" data-act="redeem">Redeem</button>
-          <button class="btn btn-sm btn-ghost" data-act="edit">Edit</button>
+          <button class="btn btn-sm btn-primary" data-act="redeem">${escapeHtml(t("reward.redeem"))}</button>
+          <button class="btn btn-sm btn-ghost" data-act="edit">${escapeHtml(t("common.edit"))}</button>
         </div>
       </div>`).join("");
 }
@@ -235,36 +236,36 @@ function onRewardClick(e){
 
 function redeemReward(r){
   const kids = state.profiles.filter(p => p.isKid);
-  if (!kids.length){ toast("Add a kid profile first"); return; }
+  if (!kids.length){ toast(t("chores.need_kids")); return; }
   openModal({
-    title: `Redeem: ${r.name}`,
-    submitLabel: "Redeem",
+    title: `${t("reward.redeem")} · ${r.name}`,
+    submitLabel: t("reward.redeem"),
     fields: [{
-      name: "who", label: "For which kid?", type: "select",
+      name: "who", label: t("reward.for"), type: "select",
       options: kids.map(p => ({ value: p.id, label: `${p.name} (${p.points || 0} pts)` }))
     }],
     onSubmit: async ({ who }) => {
       const p = profileById(who);
       if (!p) return;
-      if ((p.points || 0) < (r.cost || 0)){ toast(`${p.name} needs ${r.cost - (p.points || 0)} more points`); return; }
+      if ((p.points || 0) < (r.cost || 0)){ toast(`${p.name} — ${r.cost - (p.points || 0)} pts`); return; }
       await update("profiles", p.id, { points: (p.points || 0) - (r.cost || 0) });
-      toast(`🎉 ${p.name} redeemed ${r.name}`);
+      toast(`🎉 ${p.name} · ${r.name}`);
     }
   });
 }
 
 function openRewardForm(r){
   openModal({
-    title: r ? "Edit reward" : "New reward",
+    title: r ? t("reward.edit") : t("reward.new"),
     fields: [
-      { name: "name", label: "Reward", type: "text", required: true, value: r?.name || "" },
-      { name: "cost", label: "Cost (points)", type: "number", min: 0, value: r?.cost ?? 10 }
+      { name: "name", label: t("reward.name"), type: "text", required: true, value: r?.name || "" },
+      { name: "cost", label: t("reward.cost"), type: "number", min: 0, value: r?.cost ?? 10 }
     ],
-    onDelete: r ? async () => { await remove("rewards", r.id); toast("Reward removed"); } : null,
+    onDelete: r ? async () => { await remove("rewards", r.id); toast(t("common.saved")); } : null,
     onSubmit: async (d) => {
       if (r) await update("rewards", r.id, { name: d.name, cost: Number(d.cost) || 0 });
       else await add("rewards", { name: d.name, cost: Number(d.cost) || 0 });
-      toast("Saved");
+      toast(t("common.saved"));
     }
   });
 }
@@ -272,23 +273,22 @@ function openRewardForm(r){
 /* ---------- Chore form ---------- */
 export function openChoreForm(c){
   const editing = !!(c && c.id);
-  const profileOpts = [{ value: "", label: "Unassigned" }]
+  const profileOpts = [{ value: "", label: t("chores.unassigned") }]
     .concat(state.profiles.map(p => ({ value: p.id, label: p.name })));
   const recurOpts = ["never", "daily", "weekly", "monthly"]
-    .map(v => ({ value: v, label: v.replace(/^./, s => s.toUpperCase()) }));
+    .map(v => ({ value: v, label: t("repeat." + v) }));
 
   openModal({
-    title: editing ? "Edit chore" : "New chore",
+    title: editing ? t("chores.edit") : t("chores.new"),
     fields: [
-      { name: "title", label: "Chore", type: "text", required: true, value: c?.title || "" },
-      { name: "assignee", label: "Assigned to", type: "select", options: profileOpts, value: c?.assignee || "" },
-      { name: "dueDate", label: "Due date", type: "date", value: c?.dueDate || todayISO(), required: true },
-      { name: "isKidChore", label: "Kid chore (earns points)", type: "checkbox", value: c?.isKidChore ?? false },
-      { name: "points", label: "Points", type: "number", min: 0, value: c?.points ?? 5 },
-      { name: "recurring", label: "Repeats", type: "select", options: recurOpts, value: c?.recurring || "never",
-        hint: "Weekly repeats on the due date's weekday" }
+      { name: "title", label: t("chores.f_title"), type: "text", required: true, value: c?.title || "" },
+      { name: "assignee", label: t("chores.f_assignee"), type: "select", options: profileOpts, value: c?.assignee || "" },
+      { name: "dueDate", label: t("chores.f_due"), type: "date", value: c?.dueDate || todayISO(), required: true },
+      { name: "isKidChore", label: t("chores.f_kid"), type: "checkbox", value: c?.isKidChore ?? false },
+      { name: "points", label: t("chores.f_points"), type: "number", min: 0, value: c?.points ?? 5 },
+      { name: "recurring", label: t("chores.f_repeat"), type: "select", options: recurOpts, value: c?.recurring || "never" }
     ],
-    onDelete: editing ? async () => { await remove("chores", c.id); toast("Chore deleted"); } : null,
+    onDelete: editing ? async () => { await remove("chores", c.id); toast(t("common.saved")); } : null,
     onSubmit: async (d) => {
       const payload = {
         title: d.title,
@@ -304,7 +304,7 @@ export function openChoreForm(c){
       } else {
         await add("chores", { ...payload, completed: false, completedAt: null, completionDate: null });
       }
-      toast("Saved");
+      toast(t("common.saved"));
     }
   });
 }

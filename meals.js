@@ -5,12 +5,13 @@
    ============================================================ */
 import {
   state, onStateChange, add, update, remove,
-  DOW, iso, todayISO, parseISO, fmtShort, escapeHtml
+  DOW, iso, todayISO, parseISO, fmtShort, escapeHtml, startOfWeek
 } from "./state.js";
 import { openModal, toast } from "./ui.js";
+import { t } from "./i18n.js";
 
 let panel;
-let weekStartISO;               // Sunday of the visible week
+let weekStartISO;
 const MEAL_TYPES = ["breakfast", "lunch", "dinner"];
 
 export function initMeals(){
@@ -18,8 +19,8 @@ export function initMeals(){
   weekStartISO = sundayOf(todayISO());
   panel.innerHTML = `
     <div class="panel-head">
-      <h2>Meals</h2>
-      <button class="btn-add" id="mealGrocery"><span class="plus">🛒</span> Week → Grocery</button>
+      <h2>${escapeHtml(t("meal.title"))}</h2>
+      <button class="btn-add" id="mealGrocery"><span class="plus">🛒</span> ${escapeHtml(t("meal.to_grocery"))}</button>
     </div>
     <div class="cal-nav">
       <button id="mealPrev" aria-label="Previous week">‹</button>
@@ -28,7 +29,7 @@ export function initMeals(){
     </div>
     <div class="meal-wrap"><div class="meal-grid" id="mealGrid"></div></div>
 
-    <div class="section-title">Tonight & Today</div>
+    <div class="section-title">${escapeHtml(t("meal.today"))}</div>
     <div class="today-meals" id="mealToday"></div>
   `;
 
@@ -43,9 +44,7 @@ export function initMeals(){
 }
 
 function sundayOf(dateISO){
-  const d = parseISO(dateISO);
-  d.setDate(d.getDate() - d.getDay());
-  return iso(d);
+  return iso(startOfWeek(parseISO(dateISO)));
 }
 function shiftWeek(days){
   const d = parseISO(weekStartISO);
@@ -78,7 +77,7 @@ function render(){
   });
 
   MEAL_TYPES.forEach(type => {
-    html += `<div class="mg-row-label">${type}</div>`;
+    html += `<div class="mg-row-label">${escapeHtml(t("meal." + type))}</div>`;
     dates.forEach(dt => {
       const m = mealAt(dt, type);
       const linked = m && m.ingredients && m.ingredients.length;
@@ -100,15 +99,15 @@ function renderToday(today){
     .sort((a, b) => MEAL_TYPES.indexOf(a.mealType) - MEAL_TYPES.indexOf(b.mealType));
   const el = panel.querySelector("#mealToday");
   if (!meals.length){
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1;">No meals planned for today yet.</div>`;
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1;">${escapeHtml(t("meal.none_today"))}</div>`;
     return;
   }
   el.innerHTML = meals.map(m => `
     <div class="today-meal" data-id="${m.id}">
-      <div class="tm-type">${escapeHtml(m.mealType)}</div>
+      <div class="tm-type">${escapeHtml(t("meal." + m.mealType))}</div>
       <div class="tm-desc">${escapeHtml(m.description)}</div>
       ${m.ingredients && m.ingredients.length
-        ? `<button class="btn btn-sm btn-ghost" data-act="grocery" style="margin-top:8px;">🛒 Add ingredients</button>` : ""}
+        ? `<button class="btn btn-sm btn-ghost" data-act="grocery" style="margin-top:8px;">🛒 ${escapeHtml(t("meal.add_ingr"))}</button>` : ""}
     </div>`).join("");
 }
 
@@ -128,18 +127,17 @@ function onTodayClick(e){
 
 export function openMealForm(date, type, m){
   openModal({
-    title: m ? "Edit meal" : "Plan meal",
+    title: m ? t("meal.edit") : t("meal.plan"),
     fields: [
-      { name: "mealType", label: "Meal", type: "select", value: type,
-        options: ["breakfast", "lunch", "dinner", "snack"].map(v => ({ value: v, label: v.replace(/^./, s => s.toUpperCase()) })) },
-      { name: "date", label: "Date", type: "date", value: date, required: true },
-      { name: "description", label: "What's cooking?", type: "text", required: true, value: m?.description || "" },
-      { name: "ingredients", label: "Ingredients", type: "text",
-        value: (m?.ingredients || []).join(", "),
-        hint: "Comma separated — powers the grocery sync" },
-      { name: "notes", label: "Notes", type: "text", value: m?.notes || "" }
+      { name: "mealType", label: t("meal.f_type"), type: "select", value: type,
+        options: ["breakfast", "lunch", "dinner", "snack"].map(v => ({ value: v, label: t("meal." + v) })) },
+      { name: "date", label: t("common.date"), type: "date", value: date, required: true },
+      { name: "description", label: t("meal.f_desc"), type: "text", required: true, value: m?.description || "" },
+      { name: "ingredients", label: t("meal.f_ingr"), type: "text",
+        value: (m?.ingredients || []).join(", ") },
+      { name: "notes", label: t("common.notes"), type: "text", value: m?.notes || "" }
     ],
-    onDelete: m ? async () => { await remove("meals", m.id); toast("Meal removed"); } : null,
+    onDelete: m ? async () => { await remove("meals", m.id); toast(t("common.saved")); } : null,
     onSubmit: async (d) => {
       const payload = {
         date: d.date, mealType: d.mealType, description: d.description,
@@ -147,7 +145,7 @@ export function openMealForm(date, type, m){
       };
       if (m) await update("meals", m.id, payload);
       else await add("meals", payload);
-      toast("Saved");
+      toast(t("common.saved"));
     }
   });
 }

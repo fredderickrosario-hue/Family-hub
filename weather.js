@@ -4,6 +4,7 @@
    manual city fallback. Location + unit stored per device.
    ============================================================ */
 import { openModal, toast } from "./ui.js";
+import { t, getLang } from "./i18n.js";
 
 const LS = "familyhub.weather";
 const cfg  = () => { try { return JSON.parse(localStorage.getItem(LS) || "null"); } catch { return null; } };
@@ -85,27 +86,27 @@ function paint(c){
 function openWeatherSettings(){
   const c = cfg() || {};
   openModal({
-    title: "Weather",
-    submitLabel: "Search & save",
-    deleteLabel: "Clear",
+    title: t("wx.title"),
+    submitLabel: t("wx.search"),
+    deleteLabel: t("common.clear"),
     fields: [
-      { name: "q", label: "City", type: "text", required: true, value: c.name || "",
-        placeholder: "e.g. Montréal" },
-      { name: "unit", label: "Units", type: "select", value: c.unit || "c",
-        options: [{ value: "c", label: "Celsius °C" }, { value: "f", label: "Fahrenheit °F" }] }
+      { name: "q", label: t("wx.city"), type: "text", required: true, value: c.name || "",
+        placeholder: "Montréal" },
+      { name: "unit", label: t("wx.units"), type: "select", value: c.unit || "c",
+        options: [{ value: "c", label: t("wx.celsius") }, { value: "f", label: t("wx.fahrenheit") }] }
     ],
     onDelete: (c.lat != null) ? async () => {
       wipe();
       slot.innerHTML = `<span class="wx-ico">🌡️</span>`;
-      slot.title = "Tap to set weather location";
-      toast("Weather cleared");
+      slot.title = "";
+      toast(t("wx.cleared"));
     } : null,
     onSubmit: async (d) => {
       const r = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(d.q)}&count=1&language=en&format=json`
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(d.q)}&count=1&language=${getLang()}&format=json`
       );
       const j = await r.json();
-      if (!j.results || !j.results.length) throw new Error("City not found — try another spelling");
+      if (!j.results || !j.results.length) throw new Error(t("wx.not_found"));
       const g = j.results[0];
       const nc = {
         lat: Number(g.latitude.toFixed(3)),
@@ -115,7 +116,7 @@ function openWeatherSettings(){
       };
       save(nc);
       await refresh();
-      toast(`Weather set to ${g.name}`);
+      toast(t("wx.set", { city: g.name }));
     }
   });
 }

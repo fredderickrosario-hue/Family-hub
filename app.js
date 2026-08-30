@@ -4,6 +4,8 @@
    own panel and pulls from state.js.
    ============================================================ */
 import { onStateChange, initSync, DOW, MONTHS, todayISO } from "./state.js";
+import { t } from "./i18n.js";
+import { initTheme } from "./theme.js";
 
 import { initCalendar } from "./calendar.js";
 import { initChores, choresLed } from "./chores.js";
@@ -12,6 +14,15 @@ import { initMeals } from "./meals.js";
 import { initGrocery, groceryLed } from "./grocery.js";
 import { initFamily } from "./profiles.js";
 import { initWeather } from "./weather.js";
+import { initSettings } from "./settings.js";
+
+/* ---------- Static i18n (data-i18n attributes) ---------- */
+function applyStaticI18n(){
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.documentElement.lang = (localStorage.getItem("familyhub.lang") || "en");
+}
 
 /* ---------- Header date ---------- */
 function renderHeaderDate(){
@@ -40,6 +51,8 @@ export function setLed(id, on, color){
 }
 
 /* ---------- Init ---------- */
+initTheme();
+applyStaticI18n();
 renderHeaderDate();
 initWeather();
 
@@ -49,6 +62,7 @@ initBudget();
 initMeals();
 initGrocery();
 initFamily();
+initSettings();
 
 onStateChange(() => {
   choresLed();

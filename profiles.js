@@ -7,6 +7,7 @@ import {
   state, onStateChange, add, update, remove, escapeHtml, profileInitials
 } from "./state.js";
 import { openModal, toast, confirmAction } from "./ui.js";
+import { t } from "./i18n.js";
 
 let panel;
 
@@ -17,10 +18,10 @@ export function initFamily(){
   panel = document.getElementById("panel-family");
   panel.innerHTML = `
     <div class="panel-head">
-      <h2>Family</h2>
-      <button class="btn-add" id="profileAdd"><span class="plus">+</span> Person</button>
+      <h2>${escapeHtml(t("family.title"))}</h2>
+      <button class="btn-add" id="profileAdd"><span class="plus">+</span> ${escapeHtml(t("family.add"))}</button>
     </div>
-    <p class="sub" style="margin:0 4px 12px;">Colors show up on every chore, event and scoreboard.</p>
+    <p class="sub" style="margin:0 4px 12px;">${escapeHtml(t("family.blurb"))}</p>
     <div class="profile-grid" id="profileGrid"></div>
   `;
   panel.querySelector("#profileAdd").addEventListener("click", () => openProfileForm());
@@ -33,8 +34,7 @@ function render(){
   if (!panel) return;
   const grid = panel.querySelector("#profileGrid");
   if (!state.profiles.length){
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">
-      No family members yet. Add everyone who uses the hub — give each a color.</div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">${escapeHtml(t("family.empty"))}</div>`;
     return;
   }
   grid.innerHTML = state.profiles
@@ -44,8 +44,8 @@ function render(){
       <div class="profile-card" data-id="${p.id}" style="--chip-color:${p.color}">
         <div class="avatar lg" style="--chip-color:${p.color}">${escapeHtml(profileInitials(p))}</div>
         <div class="p-name">${escapeHtml(p.name)}</div>
-        <div class="p-role">${p.isKid ? "Kid" : "Adult"}</div>
-        ${p.isKid ? `<div class="p-pts">${p.points || 0} pts</div>` : ""}
+        <div class="p-role">${p.isKid ? escapeHtml(t("family.kid")) : escapeHtml(t("family.adult"))}</div>
+        ${p.isKid ? `<div class="p-pts">${escapeHtml(t("family.pts", { n: p.points || 0 }))}</div>` : ""}
       </div>`).join("");
 }
 
@@ -63,22 +63,22 @@ function nextColor(){
 
 function openProfileForm(p){
   const fields = [
-    { name: "name", label: "Name", type: "text", required: true, value: p?.name || "" },
-    { name: "color", label: "Color", type: "swatch", options: PALETTE, value: p?.color || nextColor() },
-    { name: "avatar", label: "Avatar (emoji or leave blank for initials)", type: "text", value: p?.avatar || "" },
-    { name: "isKid", label: "This is a kid (earns chore points)", type: "checkbox", value: p?.isKid ?? false }
+    { name: "name", label: t("family.f_name"), type: "text", required: true, value: p?.name || "" },
+    { name: "color", label: t("family.f_color"), type: "swatch", options: PALETTE, value: p?.color || nextColor() },
+    { name: "avatar", label: t("family.f_avatar"), type: "text", value: p?.avatar || "" },
+    { name: "isKid", label: t("family.f_kid"), type: "checkbox", value: p?.isKid ?? false }
   ];
   if (p?.isKid || p == null){
-    fields.push({ name: "points", label: "Points balance", type: "number", min: 0, value: p?.points ?? 0 });
+    fields.push({ name: "points", label: t("family.f_points"), type: "number", min: 0, value: p?.points ?? 0 });
   }
 
   openModal({
-    title: p ? "Edit person" : "Add person",
+    title: p ? t("family.edit") : t("family.new"),
     fields,
     onDelete: p ? async () => {
-      if (!confirmAction(`Remove ${p.name}? Their chores stay but become unassigned.`)) throw new Error("cancelled");
+      if (!confirmAction(`${t("common.delete")} ${p.name}?`)) throw new Error("cancelled");
       await remove("profiles", p.id);
-      toast(`${p.name} removed`);
+      toast(t("common.saved"));
     } : null,
     onSubmit: async (d) => {
       const payload = {
@@ -90,7 +90,7 @@ function openProfileForm(p){
       };
       if (p) await update("profiles", p.id, payload);
       else await add("profiles", payload);
-      toast("Saved");
+      toast(t("common.saved"));
     }
   });
 }

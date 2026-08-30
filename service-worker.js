@@ -1,5 +1,5 @@
 // Bump this on every deploy so devices pick up the new shell.
-const CACHE_NAME = "family-hub-v5";
+const CACHE_NAME = "family-hub-v6";
 
 const SHELL_FILES = [
   "./",
@@ -8,10 +8,13 @@ const SHELL_FILES = [
   "./manifest.json",
   "./firebase-config.js",
   "./state.js",
+  "./i18n.js",
+  "./theme.js",
   "./ui.js",
   "./app.js",
   "./calendar.js",
   "./weather.js",
+  "./settings.js",
   "./chores.js",
   "./budget.js",
   "./meals.js",

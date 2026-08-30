@@ -7,8 +7,10 @@ import { db } from "./firebase-config.js";
 import {
   collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { t } from "./i18n.js";
 
 export { db, collection, addDoc, updateDoc, deleteDoc, doc };
+export { t };
 
 /* ---------- State ---------- */
 export const state = {
@@ -31,12 +33,32 @@ export const state = {
 const listeners = new Set();
 export function onStateChange(fn){ listeners.add(fn); return () => listeners.delete(fn); }
 function emit(){ listeners.forEach(fn => { try { fn(); } catch (e) { console.error(e); } }); }
+export function nudge(){ emit(); }   // force a re-render pass (settings changes etc.)
 
 /* ---------- Date helpers ---------- */
-export const DOW      = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
-export const DOW_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-export const MONTHS   = ["January","February","March","April","May","June","July",
-                         "August","September","October","November","December"];
+function pref(key, fallback){
+  try { const v = localStorage.getItem(key); return v == null ? fallback : v; }
+  catch { return fallback; }
+}
+const LOCALE = pref("familyhub.lang", "en") === "fr" ? "fr-CA" : "en-CA";
+const _fmt = (opts) => new Intl.DateTimeFormat(LOCALE, { ...opts, timeZone: "UTC" });
+// Jan 1 2023 is a Sunday — build weekday names starting Sunday.
+export const DOW      = [...Array(7)].map((_, i) =>
+  _fmt({ weekday: "short" }).format(Date.UTC(2023, 0, 1 + i)).replace(".", "").toUpperCase());
+export const DOW_FULL = [...Array(7)].map((_, i) =>
+  _fmt({ weekday: "long" }).format(Date.UTC(2023, 0, 1 + i)));
+export const MONTHS   = [...Array(12)].map((_, i) =>
+  _fmt({ month: "long" }).format(Date.UTC(2023, i, 15)));
+
+export function weekStartDay(){
+  const n = Number(pref("familyhub.weekStart", "0"));
+  return n === 1 ? 1 : 0;
+}
+/** DOW rotated so the configured first day is index 0 (with its real weekday number). */
+export function orderedDOW(){
+  const ws = weekStartDay();
+  return [...Array(7)].map((_, i) => ({ label: DOW[(i + ws) % 7], day: (i + ws) % 7 }));
+}
 
 export const iso = (d) => {
   const y = d.getFullYear();
@@ -60,9 +82,10 @@ export function addDaysD(date, n){
   return d;
 }
 export function startOfWeek(date){
+  const ws = weekStartDay();
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - d.getDay());
+  d.setDate(d.getDate() - ((d.getDay() - ws + 7) % 7));
   return d;
 }
 export function setCalView(v){
@@ -79,11 +102,11 @@ export function fmtShort(dateISO){
 }
 export function relativeDay(dateISO){
   const diff = Math.round((parseISO(dateISO) - parseISO(todayISO())) / 86400000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Tomorrow";
-  if (diff === -1) return "Yesterday";
-  if (diff < 0) return `${Math.abs(diff)} days ago`;
-  if (diff < 7) return `In ${diff} days`;
+  if (diff === 0) return t("rel.today");
+  if (diff === 1) return t("rel.tomorrow");
+  if (diff === -1) return t("rel.yesterday");
+  if (diff < 0) return t("rel.days_ago", { n: Math.abs(diff) });
+  if (diff < 7) return t("rel.in_days", { n: diff });
   return fmtShort(dateISO);
 }
 
@@ -111,7 +134,7 @@ export function profileColor(id){
 }
 export function profileName(id){
   const p = profileById(id);
-  return p ? p.name : "Unassigned";
+  return p ? p.name : t("chores.unassigned");
 }
 export function profileInitials(p){
   if (!p) return "?";

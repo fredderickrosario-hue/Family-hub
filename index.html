@@ -10,6 +10,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="styles.css">
+<script>
+  /* apply saved theme before first paint to avoid a flash */
+  try {
+    var m = localStorage.getItem("familyhub.theme") || "system";
+    if (m !== "system") document.documentElement.setAttribute("data-theme", m);
+  } catch (e) {}
+</script>
 </head>
 <body>
 <div id="app">
@@ -27,33 +34,38 @@
   <nav class="tab-nav" id="tabNav">
     <button class="tab-btn active" data-tab="main">
       <span class="tab-icon" aria-hidden="true">📅</span>
-      <span class="tab-label">Calendar</span>
+      <span class="tab-label" data-i18n="nav.calendar">Calendar</span>
       <span class="tab-led" id="ledMain"></span>
     </button>
     <button class="tab-btn" data-tab="chores">
       <span class="tab-icon" aria-hidden="true">✅</span>
-      <span class="tab-label">Chores</span>
+      <span class="tab-label" data-i18n="nav.chores">Chores</span>
       <span class="tab-led" id="ledChores"></span>
     </button>
     <button class="tab-btn" data-tab="budget">
       <span class="tab-icon" aria-hidden="true">💰</span>
-      <span class="tab-label">Budget</span>
+      <span class="tab-label" data-i18n="nav.budget">Budget</span>
       <span class="tab-led" id="ledBudget"></span>
     </button>
     <button class="tab-btn" data-tab="meal">
       <span class="tab-icon" aria-hidden="true">🍽️</span>
-      <span class="tab-label">Meals</span>
+      <span class="tab-label" data-i18n="nav.meal">Meals</span>
       <span class="tab-led" id="ledMeal"></span>
     </button>
     <button class="tab-btn" data-tab="grocery">
       <span class="tab-icon" aria-hidden="true">🛒</span>
-      <span class="tab-label">Grocery</span>
+      <span class="tab-label" data-i18n="nav.grocery">Grocery</span>
       <span class="tab-led" id="ledGrocery"></span>
     </button>
     <button class="tab-btn" data-tab="family">
       <span class="tab-icon" aria-hidden="true">👪</span>
-      <span class="tab-label">Family</span>
+      <span class="tab-label" data-i18n="nav.family">Family</span>
       <span class="tab-led" id="ledFamily"></span>
+    </button>
+    <button class="tab-btn tab-btn-settings" data-tab="settings">
+      <span class="tab-icon" aria-hidden="true">⚙️</span>
+      <span class="tab-label" data-i18n="nav.settings">Settings</span>
+      <span class="tab-led" id="ledSettings"></span>
     </button>
   </nav>
 
@@ -61,8 +73,8 @@
     <!-- MAIN CALENDAR -->
     <section class="panel active" id="panel-main">
       <div class="panel-head">
-        <h2>Calendar</h2>
-        <button class="btn-add" id="gcalBtn"><span class="plus">🔗</span> Sync</button>
+        <h2 data-i18n="nav.calendar">Calendar</h2>
+        <button class="btn-add" id="gcalBtn"><span class="plus">🔗</span> <span data-i18n="cal.sync">Sync</span></button>
       </div>
       <div id="calRoot"></div>
     </section>
@@ -73,6 +85,7 @@
     <section class="panel" id="panel-meal"></section>
     <section class="panel" id="panel-grocery"></section>
     <section class="panel" id="panel-family"></section>
+    <section class="panel" id="panel-settings"></section>
   </main>
 
 </div>

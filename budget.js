@@ -8,6 +8,7 @@ import {
   todayISO, fmtShort, escapeHtml, fmtMoney
 } from "./state.js";
 import { openModal, toast } from "./ui.js";
+import { t } from "./i18n.js";
 import { setLed } from "./app.js";
 
 let panel;
@@ -16,8 +17,8 @@ export function initBudget(){
   panel = document.getElementById("panel-budget");
   panel.innerHTML = `
     <div class="panel-head">
-      <h2>Budget</h2>
-      <button class="btn-add" id="budgetAdd"><span class="plus">+</span> Entry</button>
+      <h2>${escapeHtml(t("budget.title"))}</h2>
+      <button class="btn-add" id="budgetAdd"><span class="plus">+</span> ${escapeHtml(t("budget.add"))}</button>
     </div>
     <div class="budget-summary" id="budgetSummary"></div>
     <div id="budgetSections"></div>
@@ -39,9 +40,9 @@ function render(){
   renderSummary(entries);
 
   panel.querySelector("#budgetSections").innerHTML = `
-    <div class="section-title">Pending <span class="count">${pending.length}</span></div>
-    ${pending.length ? `<div class="card-list">${pending.map(card).join("")}</div>` : `<div class="empty">No pending entries.</div>`}
-    ${done.length ? `<div class="section-title">Done <span class="count">${done.length}</span></div>
+    <div class="section-title">${escapeHtml(t("common.pending"))} <span class="count">${pending.length}</span></div>
+    ${pending.length ? `<div class="card-list">${pending.map(card).join("")}</div>` : `<div class="empty">${escapeHtml(t("budget.no_pending"))}</div>`}
+    ${done.length ? `<div class="section-title">${escapeHtml(t("common.done"))} <span class="count">${done.length}</span></div>
       <div class="card-list">${done.map(card).join("")}</div>` : ""}
   `;
 }
@@ -52,9 +53,9 @@ function renderSummary(entries){
   const net = inSum - outSum;
   const netStr = `${net < 0 ? "−" : ""}$${fmtMoney(Math.abs(net))}`;
   panel.querySelector("#budgetSummary").innerHTML = `
-    <div class="summary-tile"><div class="s-label">Money in</div><div class="s-value in">$${fmtMoney(inSum)}</div></div>
-    <div class="summary-tile"><div class="s-label">Money out</div><div class="s-value out">$${fmtMoney(outSum)}</div></div>
-    <div class="summary-tile"><div class="s-label">Net</div><div class="s-value ${net < 0 ? "out" : "in"}">${netStr}</div></div>
+    <div class="summary-tile"><div class="s-label">${escapeHtml(t("budget.money_in"))}</div><div class="s-value in">$${fmtMoney(inSum)}</div></div>
+    <div class="summary-tile"><div class="s-label">${escapeHtml(t("budget.money_out"))}</div><div class="s-value out">$${fmtMoney(outSum)}</div></div>
+    <div class="summary-tile"><div class="s-label">${escapeHtml(t("budget.net"))}</div><div class="s-value ${net < 0 ? "out" : "in"}">${netStr}</div></div>
   `;
 }
 
@@ -71,7 +72,7 @@ function card(e){
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
         <div class="budget-amount ${dir}">${isOut ? "−" : "+"}$${fmtMoney(e.amount)}</div>
-        <button class="status-toggle" data-act="status">${completed ? "✓ Done" : "Mark done"}</button>
+        <button class="status-toggle" data-act="status">${completed ? "✓ " + escapeHtml(t("common.done")) : escapeHtml(t("budget.mark_done"))}</button>
       </div>
     </div>`;
 }
@@ -83,7 +84,7 @@ function onClick(e){
   if (!entry) return;
   if (e.target.closest("[data-act='status']")){
     const next = (entry.status || "pending") === "completed" ? "pending" : "completed";
-    update("budgetEntries", entry.id, { status: next }).catch(() => toast("Couldn't update"));
+    update("budgetEntries", entry.id, { status: next }).catch(() => toast(t("common.error")));
   } else {
     openBudgetForm(entry);
   }
@@ -92,19 +93,18 @@ function onClick(e){
 export function openBudgetForm(entry){
   const editing = !!(entry && entry.id);
   openModal({
-    title: editing ? "Edit entry" : "New budget entry",
+    title: editing ? t("budget.edit") : t("budget.new"),
     fields: [
-      { name: "party", label: "Who / what", type: "text", required: true, value: entry?.party || "",
-        placeholder: "Client, vendor, bill…" },
-      { name: "amount", label: "Amount ($)", type: "number", min: 0, step: 0.01, required: true, value: entry?.amount ?? "" },
-      { name: "type", label: "Direction", type: "select", value: entry?.type || "payment",
-        options: [{ value: "payment", label: "↓ Money in (payment)" }, { value: "payout", label: "↑ Money out (payout)" }] },
-      { name: "date", label: "Date", type: "date", required: true, value: entry?.date || todayISO() },
-      { name: "status", label: "Status", type: "select", value: entry?.status || "pending",
-        options: [{ value: "pending", label: "Pending" }, { value: "completed", label: "Completed" }] },
-      { name: "notes", label: "Notes", type: "text", value: entry?.notes || "" }
+      { name: "party", label: t("budget.f_party"), type: "text", required: true, value: entry?.party || "" },
+      { name: "amount", label: t("budget.f_amount"), type: "number", min: 0, step: 0.01, required: true, value: entry?.amount ?? "" },
+      { name: "type", label: t("budget.f_dir"), type: "select", value: entry?.type || "payment",
+        options: [{ value: "payment", label: t("budget.in") }, { value: "payout", label: t("budget.out") }] },
+      { name: "date", label: t("common.date"), type: "date", required: true, value: entry?.date || todayISO() },
+      { name: "status", label: t("budget.f_status"), type: "select", value: entry?.status || "pending",
+        options: [{ value: "pending", label: t("common.pending") }, { value: "completed", label: t("common.done") }] },
+      { name: "notes", label: t("common.notes"), type: "text", value: entry?.notes || "" }
     ],
-    onDelete: editing ? async () => { await remove("budgetEntries", entry.id); toast("Entry deleted"); } : null,
+    onDelete: editing ? async () => { await remove("budgetEntries", entry.id); toast(t("common.saved")); } : null,
     onSubmit: async (d) => {
       const payload = {
         party: d.party, amount: Number(d.amount) || 0, type: d.type,
@@ -112,7 +112,7 @@ export function openBudgetForm(entry){
       };
       if (editing) await update("budgetEntries", entry.id, payload);
       else await add("budgetEntries", payload);
-      toast("Saved");
+      toast(t("common.saved"));
     }
   });
 }

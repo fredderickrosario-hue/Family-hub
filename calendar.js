@@ -6,9 +6,11 @@
 import {
   state, onStateChange, add, update, remove,
   DOW, MONTHS, iso, todayISO, parseISO, fmtDayLabel, escapeHtml,
-  profileName, profileColor, addDaysD, startOfWeek, setCalView
+  profileName, profileColor, addDaysD, startOfWeek, setCalView,
+  orderedDOW, weekStartDay
 } from "./state.js";
 import { openModal, toast } from "./ui.js";
+import { t } from "./i18n.js";
 import { gcalEnabled, gcalFetchMonth, openGcalSettings } from "./gcal.js";
 import { openChoreForm } from "./chores.js";
 import { openBudgetForm } from "./budget.js";
@@ -52,13 +54,15 @@ function itemsForDate(dateISO){
   if (gcalEnabled()){
     state.gcalEvents.filter(e => e.date === dateISO).forEach(e => out.push({
       kind: "gcal", cls: "gcal", title: e.title || "(busy)",
-      time: e.time || "", allDay: !!e.allDay, sub: e.location || "", raw: e
+      time: e.time || "", allDay: !!e.allDay, sub: e.location || "",
+      color: e.color || null, raw: e
     }));
   }
 
   state.meals.filter(m => m.date === dateISO).forEach(m => out.push({
     kind: "meal", cls: "meal", title: m.description || "(meal)",
-    sub: cap(m.mealType), mealType: m.mealType, allDay: true, raw: m
+    sub: t("meal." + m.mealType) === "meal." + m.mealType ? cap(m.mealType) : t("meal." + m.mealType),
+    mealType: m.mealType, allDay: true, raw: m
   }));
 
   state.chores.filter(c => c.dueDate === dateISO).forEach(c => out.push({
@@ -109,6 +113,15 @@ function render(){
 
   root.innerHTML = toolbar() + `<div class="cal-body cal-${v}">${view}</div>`;
 
+  const syncBtn = document.getElementById("gcalBtn");
+  if (syncBtn){
+    const on = gcalEnabled();
+    syncBtn.classList.toggle("synced", on);
+    syncBtn.innerHTML = on
+      ? `<span class="plus">✓</span> ${escapeHtml(t("cal.synced"))}`
+      : `<span class="plus">🔗</span> ${escapeHtml(t("cal.sync"))}`;
+  }
+
   setLed("ledMain",
     itemsForDate(todayISO()).some(i => i.kind === "event" || i.kind === "gcal"),
     "var(--info)");
@@ -121,11 +134,11 @@ function toolbar(){
   return `
     <div class="cal-toolbar">
       <div class="cal-views">
-        ${views.map(v => `<button class="cal-view-btn${state.calView === v ? " active" : ""}" data-view="${v}">${cap(v)}</button>`).join("")}
+        ${views.map(v => `<button class="cal-view-btn${state.calView === v ? " active" : ""}" data-view="${v}">${escapeHtml(t("cal." + v))}</button>`).join("")}
       </div>
       <div class="cal-period">
         <button class="cal-step" data-step="-1" aria-label="Previous">‹</button>
-        <button class="cal-step cal-today-btn" data-step="0">Today</button>
+        <button class="cal-step cal-today-btn" data-step="0">${escapeHtml(t("common.today"))}</button>
         <span class="cal-period-label">${escapeHtml(periodLabel())}</span>
         <button class="cal-step" data-step="1" aria-label="Next">›</button>
       </div>
@@ -163,7 +176,8 @@ function doStep(dir){
 /* ---------- Month ---------- */
 function monthView(){
   const y = state.viewDate.getFullYear(), m = state.viewDate.getMonth();
-  const first = new Date(y, m, 1).getDay();
+  const ws = weekStartDay();
+  const first = (new Date(y, m, 1).getDay() - ws + 7) % 7;
   const dim = new Date(y, m + 1, 0).getDate();
   const today = todayISO();
   const maxChips = window.matchMedia("(min-width: 768px)").matches ? 3 : 2;
@@ -180,12 +194,12 @@ function monthView(){
         <span class="mcell-day">${d}</span>
         <div class="mcell-items">
           ${shown.map(chipMini).join("")}
-          ${extra > 0 ? `<button class="mcell-more" data-more="${dISO}">${extra} more…</button>` : ""}
+          ${extra > 0 ? `<button class="mcell-more" data-more="${dISO}">${escapeHtml(t("cal.more", { n: extra }))}</button>` : ""}
         </div>
       </div>`;
   }
   return `
-    <div class="mgrid-dow">${DOW.map(x => `<div>${x}</div>`).join("")}</div>
+    <div class="mgrid-dow">${orderedDOW().map(x => `<div>${x.label}</div>`).join("")}</div>
     <div class="mgrid">${cells}</div>`;
 }
 
@@ -224,7 +238,7 @@ function dayView(){
   return `<div class="day-view">
     ${items.length
       ? items.map(chipRow).join("")
-      : `<div class="empty">Nothing planned for this day. Tap the <b>+</b> button to add something.</div>`}
+      : `<div class="empty">${escapeHtml(t("cal.empty_day"))}</div>`}
   </div>`;
 }
 
@@ -248,14 +262,15 @@ function agendaView(){
       <div class="agenda-cal card">${miniMonth(sel)}</div>
       <div class="agenda-detail card">
         <div class="agenda-detail-head">${escapeHtml(fmtDayLabel(sel))}</div>
-        ${items.length ? items.map(chipRow).join("") : `<div class="empty">Nothing this day.</div>`}
+        ${items.length ? items.map(chipRow).join("") : `<div class="empty">${escapeHtml(t("cal.empty_short"))}</div>`}
       </div>
     </div>`;
 }
 
 function miniMonth(selISO){
   const y = state.viewDate.getFullYear(), m = state.viewDate.getMonth();
-  const first = new Date(y, m, 1).getDay();
+  const ws = weekStartDay();
+  const first = (new Date(y, m, 1).getDay() - ws + 7) % 7;
   const dim = new Date(y, m + 1, 0).getDate();
   const today = todayISO();
   let cells = "";
@@ -267,7 +282,7 @@ function miniMonth(selISO){
       <span>${d}</span>${has ? `<span class="mini-dot"></span>` : ""}</button>`;
   }
   return `
-    <div class="mini-dow">${DOW.map(x => `<div>${x[0]}</div>`).join("")}</div>
+    <div class="mini-dow">${orderedDOW().map(x => `<div>${x.label[0]}</div>`).join("")}</div>
     <div class="mini-grid">${cells}</div>`;
 }
 
@@ -347,32 +362,32 @@ function openItemEditor(kind, id){
 export function openEventForm(ev){
   const editing = !!(ev && ev.id);
   openModal({
-    title: editing ? "Edit event" : "Add event",
+    title: editing ? t("cal.edit_event") : t("cal.add_event"),
     fields: [
-      { name: "title", label: "Title", type: "text", required: true, value: ev?.title || "" },
-      { name: "date", label: "Date", type: "date", required: true, value: ev?.date || todayISO() },
-      { name: "time", label: "Time", type: "time", value: ev?.time || "" },
-      { name: "notes", label: "Notes", type: "textarea", value: ev?.notes || "" }
+      { name: "title", label: t("common.title"), type: "text", required: true, value: ev?.title || "" },
+      { name: "date", label: t("common.date"), type: "date", required: true, value: ev?.date || todayISO() },
+      { name: "time", label: t("common.time"), type: "time", value: ev?.time || "" },
+      { name: "notes", label: t("common.notes"), type: "textarea", value: ev?.notes || "" }
     ],
-    onDelete: editing ? async () => { await remove("events", ev.id); toast("Event deleted"); } : null,
+    onDelete: editing ? async () => { await remove("events", ev.id); toast(t("cal.event_deleted")); } : null,
     onSubmit: async (d) => {
       const payload = { title: d.title, date: d.date, time: d.time, notes: d.notes || "" };
       if (editing) await update("events", ev.id, payload);
       else await add("events", payload);
-      toast("Saved");
+      toast(t("common.saved"));
     }
   });
 }
 
 function showGcalEvent(ev){
   openModal({
-    title: ev.title || "Google Calendar event",
-    submitLabel: "Close",
+    title: ev.title || "Google Calendar",
+    submitLabel: t("common.close"),
     body: [
-      ev.allDay ? "All day" : (ev.time ? `Time · ${escapeHtml(ev.time)}` : ""),
+      ev.allDay ? t("common.all_day") : (ev.time ? `${t("common.time")} · ${escapeHtml(ev.time)}` : ""),
       ev.location ? `📍 ${escapeHtml(ev.location)}` : "",
       ev.notes ? escapeHtml(ev.notes) : "",
-      `<span class="muted">From Google Calendar · read-only</span>`
+      `<span class="muted">${escapeHtml(t("cal.gcal_readonly"))}</span>`
     ].filter(Boolean).join("<br>"),
     onSubmit: async () => {}
   });
@@ -389,16 +404,16 @@ function openAdd(kind, dateISO){
     openBudgetForm({ date: dateISO });
   } else if (kind === "grocery"){
     openModal({
-      title: "Add to grocery list",
-      fields: [{ name: "name", label: "Item(s)", type: "text", required: true,
-        placeholder: "milk, eggs, bread", hint: "Separate multiple items with commas" }],
+      title: t("grocery.title"),
+      fields: [{ name: "name", label: t("fab.grocery"), type: "text", required: true,
+        placeholder: "milk, eggs, bread", hint: t("meal.f_ingr") }],
       onSubmit: async (d) => {
         const names = d.name.split(",").map(s => s.trim()).filter(Boolean);
         for (const name of names){
           if (state.groceryItems.some(g => g.name.toLowerCase() === name.toLowerCase())) continue;
           await add("groceryItems", { name, checked: false, addedDate: Date.now(), category: "" });
         }
-        toast(names.length > 1 ? `Added ${names.length} items` : "Added to grocery");
+        toast(t("common.saved"));
       }
     });
   }
@@ -408,11 +423,11 @@ function openAdd(kind, dateISO){
    Radial "+" menu
    ============================================================ */
 const FAB_ACTIONS = [
-  { kind: "event",   label: "Event",   ico: "📅" },
-  { kind: "chore",   label: "Chore",   ico: "✅" },
-  { kind: "meal",    label: "Meal",    ico: "🍽️" },
-  { kind: "budget",  label: "Budget",  ico: "💰" },
-  { kind: "grocery", label: "Grocery", ico: "🛒" }
+  { kind: "event",   labelKey: "fab.event",   ico: "📅" },
+  { kind: "chore",   labelKey: "fab.chore",   ico: "✅" },
+  { kind: "meal",    labelKey: "fab.meal",    ico: "🍽️" },
+  { kind: "budget",  labelKey: "fab.budget",  ico: "💰" },
+  { kind: "grocery", labelKey: "fab.grocery", ico: "🛒" }
 ];
 
 function fabDate(){
@@ -435,7 +450,7 @@ function buildFab(){
         const x = -Math.round(Math.sin(ang) * R);
         const y = -Math.round(Math.cos(ang) * R);
         return `<button class="fab-item" data-fab="${a.kind}" style="--x:${x}px;--y:${y}px;--d:${i * 32}ms">
-          <span class="fab-item-label">${a.label}</span>
+          <span class="fab-item-label">${escapeHtml(t(a.labelKey))}</span>
           <span class="fab-item-ico">${a.ico}</span>
         </button>`;
       }).join("")}
