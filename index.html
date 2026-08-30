@@ -57,6 +57,10 @@
   <main>
     <!-- MAIN CALENDAR -->
     <section class="panel active" id="panel-main">
+      <div class="panel-head">
+        <h2>Calendar</h2>
+        <button class="btn-add" id="gcalBtn"><span class="plus">🔗</span> Sync</button>
+      </div>
       <div class="card">
         <div class="cal-nav">
           <button id="calPrev" aria-label="Previous month">‹</button>
@@ -70,6 +74,7 @@
         <div class="section-title" style="margin:0 0 10px;">Legend</div>
         <div style="display:flex;flex-wrap:wrap;gap:14px;">
           <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot evt"></span>Event</span>
+          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot gcal"></span>Google Calendar</span>
           <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot chore"></span>Chore due</span>
           <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot meal"></span>Meal planned</span>
           <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot budget"></span>Budget due</span>

@@ -22,7 +22,8 @@ export const state = {
   budgetEntries: [],         // {id, party, amount, type, date, status, notes}
   meals: [],                 // {id, date, mealType, description, ingredients, notes}
   groceryItems: [],          // {id, name, checked, addedDate, category}
-  profiles: []               // {id, name, color, isKid, avatar, points}
+  profiles: [],              // {id, name, color, isKid, avatar, points}
+  gcalEvents: []             // read-only, from Google Calendar via the relay
 };
 
 /* ---------- Pub/sub ---------- */

@@ -163,7 +163,7 @@ function choreRow({ c, doneToday }){
           ${doneToday ? `<span class="badge done-today">Done today</span>` : ""}
         </div>
       </div>
-      <button class="row-edit" data-act="edit" aria-label="Edit ${escapeHtml(c.title)}">✎</button>
+      <span class="row-edit" aria-hidden="true">✏️</span>
     </div>`;
 }
 
@@ -172,12 +172,12 @@ function onSectionClick(e){
   if (!row) return;
   const c = state.chores.find(x => x.id === row.dataset.id);
   if (!c) return;
-  const act = e.target.closest("[data-act]")?.dataset.act;
-  if (act === "toggle"){
+  if (e.target.closest(".check")){
     const btn = e.target.closest(".check");
     if (btn && !btn.classList.contains("checked")) btn.classList.add("checked"); // instant feedback
     toggleChore(c).catch(() => toast("Couldn't update chore"));
-  } else if (act === "edit"){
+  } else {
+    // tap anywhere else on the row to edit (assignee, points, due date, repeat)
     openChoreForm(c);
   }
 }

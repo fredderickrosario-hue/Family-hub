@@ -15,6 +15,7 @@ import { initBudget, budgetLed } from "./budget.js";
 import { initMeals } from "./meals.js";
 import { initGrocery, groceryLed } from "./grocery.js";
 import { initFamily } from "./profiles.js";
+import { gcalEnabled, gcalFetchMonth, openGcalSettings } from "./gcal.js";
 
 /* ---------- Header ---------- */
 function renderHeaderDate(){
@@ -43,13 +44,14 @@ function renderDow(){
 function entriesForDate(dateISO){
   return {
     events: state.events.filter(e => e.date === dateISO),
+    gcal:   state.gcalEvents.filter(e => e.date === dateISO),
     chores: state.chores.filter(c => c.dueDate === dateISO),
     meals:  state.meals.filter(m => m.date === dateISO),
     budget: state.budgetEntries.filter(b => b.date === dateISO)
   };
 }
 
-function renderCalendar(){
+function paintCalendar(){
   const y = state.viewDate.getFullYear();
   const m = state.viewDate.getMonth();
   document.getElementById("calMonthLabel").textContent = `${MONTHS[m]} ${y}`;
@@ -63,11 +65,12 @@ function renderCalendar(){
 
   for (let d = 1; d <= daysInMonth; d++){
     const dateISO = iso(new Date(y, m, d));
-    const { events, chores, meals, budget } = entriesForDate(dateISO);
+    const { events, gcal, chores, meals, budget } = entriesForDate(dateISO);
     const isToday = dateISO === today;
 
     let dots = "";
     if (events.length) dots += `<span class="dot evt"></span>`;
+    if (gcal.length)   dots += `<span class="dot gcal"></span>`;
     if (chores.length) dots += `<span class="dot chore"></span>`;
     if (meals.length)  dots += `<span class="dot meal"></span>`;
     if (budget.length) dots += `<span class="dot budget"></span>`;
@@ -80,6 +83,35 @@ function renderCalendar(){
   }
   document.getElementById("calGrid").innerHTML = html;
   updateMainLed(today);
+}
+
+let gcalBusy = false;
+async function refreshGcal(){
+  if (!gcalEnabled() || gcalBusy) return;
+  gcalBusy = true;
+  let changed = false;
+  try { changed = await gcalFetchMonth(state.viewDate); }
+  finally { gcalBusy = false; }
+  if (changed){
+    paintCalendar();
+    if (backdrop.classList.contains("open")) renderSheetEntries();
+  }
+}
+
+function renderCalendar(){
+  paintCalendar();
+  updateGcalBtn();
+  refreshGcal();
+}
+
+function updateGcalBtn(){
+  const btn = document.getElementById("gcalBtn");
+  if (!btn) return;
+  const on = gcalEnabled();
+  btn.classList.toggle("synced", on);
+  btn.innerHTML = on
+    ? `<span class="plus">✓</span> Synced`
+    : `<span class="plus">🔗</span> Sync`;
 }
 
 function updateMainLed(today){
@@ -125,9 +157,14 @@ function openDaySheet(dateISO){
 function closeDaySheet(){ backdrop.classList.remove("open"); }
 
 function renderSheetEntries(){
-  const { events, chores, meals, budget } = entriesForDate(state.selectedDateISO);
+  const { events, gcal, chores, meals, budget } = entriesForDate(state.selectedDateISO);
   const rows = [];
   events.forEach(e => rows.push({ dot: "evt", title: e.title, meta: e.time || "All day" }));
+  gcal.forEach(e => rows.push({
+    dot: "gcal",
+    title: e.title || "(busy)",
+    meta: [e.allDay ? "All day" : e.time, e.location].filter(Boolean).join(" · ") || "Google Calendar"
+  }));
   chores.forEach(c => rows.push({
     dot: "chore",
     title: c.title,
@@ -155,6 +192,11 @@ function renderSheetEntries(){
 
 document.getElementById("sheetClose").addEventListener("click", closeDaySheet);
 backdrop.addEventListener("mousedown", (e) => { if (e.target === backdrop) closeDaySheet(); });
+
+/* Google Calendar sync button */
+document.getElementById("gcalBtn").addEventListener("click", () => {
+  openGcalSettings(() => { updateGcalBtn(); renderCalendar(); });
+});
 
 /* Quick-add from a day */
 backdrop.addEventListener("click", (e) => {

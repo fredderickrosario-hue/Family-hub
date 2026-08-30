@@ -288,6 +288,7 @@ main{
 }
 .btn-add:active{ transform: translateY(1px); }
 .btn-add .plus{ font-size: 18px; line-height: 1; }
+.btn-add.synced{ background: var(--success-ink); }
 
 /* ============================================================
    PROFILE CHIPS & AVATARS
@@ -474,7 +475,9 @@ main{
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
 }
+.chore-row:hover{ border-color: var(--line-strong); }
 .chore-row.overdue{ border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 .chore-row.done{ opacity: .62; }
 
@@ -542,14 +545,12 @@ main{
 .badge.done-today{ background: color-mix(in srgb, var(--success) 22%, #fff); color: var(--success-ink); }
 
 .row-edit{
-  background: none;
-  border: none;
-  color: var(--text-soft);
-  font-size: 18px;
-  cursor: pointer;
+  font-size: 15px;
   padding: 6px;
   flex-shrink: 0;
+  opacity: .4;
 }
+.chore-row:hover .row-edit{ opacity: .75; }
 
 /* Scoreboard / rewards */
 .scoreboard{

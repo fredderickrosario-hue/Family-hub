@@ -95,7 +95,11 @@ export function openModal({ title, submitLabel = "Save", deleteLabel = "Delete",
     }
     submit.disabled = true;
     try { await onSubmit(data); closeModal(); }
-    catch (err){ console.error(err); toast("Something went wrong"); submit.disabled = false; }
+    catch (err){
+      console.error(err);
+      toast(err && err.message ? err.message : "Something went wrong");
+      submit.disabled = false;
+    }
   });
 
   backdrop.querySelector(".modal-close").addEventListener("click", closeModal);
