@@ -5,14 +5,14 @@
    ============================================================ */
 import {
   state, onStateChange, add, update, remove,
-  DOW, MONTHS, iso, todayISO, parseISO, fmtDayLabel, escapeHtml,
-  profileName, profileColor, addDaysD, startOfWeek, setCalView,
+  DOW, MONTHS, iso, todayISO, parseISO, fmtDayLabel, relativeDay, escapeHtml,
+  profileName, profileById, profileColor, addDaysD, startOfWeek, setCalView,
   orderedDOW, weekStartDay
 } from "./state.js";
 import { openModal, toast } from "./ui.js";
 import { t } from "./i18n.js";
 import { gcalEnabled, gcalFetchMonth, openGcalSettings } from "./gcal.js";
-import { openChoreForm } from "./chores.js";
+import { openChoreForm, toggleChore } from "./chores.js";
 import { openBudgetForm } from "./budget.js";
 import { openMealForm } from "./meals.js";
 import { setLed } from "./app.js";
@@ -266,15 +266,102 @@ function agendaSel(){
 
 function agendaView(){
   const sel = agendaSel();
-  const items = itemsForDate(sel);
+  const full = fmtDayLabel(sel);
+  const diff = Math.round((parseISO(sel) - parseISO(todayISO())) / 86400000);
+  const head = Math.abs(diff) <= 1 ? `${relativeDay(sel)} · ${full}` : full;
   return `
     <div class="agenda">
-      <div class="agenda-cal card">${miniMonth(sel)}</div>
-      <div class="agenda-detail card">
-        <div class="agenda-detail-head">${escapeHtml(fmtDayLabel(sel))}</div>
-        ${items.length ? items.map(chipRow).join("") : `<div class="empty">${escapeHtml(t("cal.empty_short"))}</div>`}
+      <div class="agenda-side card">${miniMonth(sel)}</div>
+      <div class="agenda-main">
+        <div class="agenda-day">${escapeHtml(head)}</div>
+        <div class="agenda-widgets">
+          ${wEvents(sel)}
+          ${wTasks(sel)}
+          ${wMeals(sel)}
+          ${wGrocery(sel)}
+        </div>
       </div>
     </div>`;
+}
+
+/* ---------- Agenda widgets ---------- */
+function widget(ico, title, count, body, extra = ""){
+  return `<div class="widget card ${extra}">
+    <div class="widget-head"><span class="widget-ico">${ico}</span>${escapeHtml(title)}
+      ${count ? `<span class="widget-count">${count}</span>` : ""}</div>
+    <div class="widget-body">${body}</div>
+  </div>`;
+}
+const wEmpty = (txt) => `<div class="widget-empty">${escapeHtml(txt)}</div>`;
+
+function wEvents(dISO){
+  const rows = [];
+  state.events.filter(e => e.date === dISO).forEach(e =>
+    rows.push({ id: e.id, kind: "event", cls: "evt", title: e.title || "(untitled)", time: e.time || "", allDay: !e.time }));
+  if (gcalEnabled()) state.gcalEvents.filter(e => e.date === dISO).forEach(e =>
+    rows.push({ id: e.id, kind: "gcal", cls: "gcal", title: e.title || "(busy)", time: e.time || "", allDay: !!e.allDay, color: e.color }));
+  rows.sort((a, b) => (a.allDay ? 1 : 0) - (b.allDay ? 1 : 0) || (a.time || "").localeCompare(b.time || ""));
+
+  const body = rows.length
+    ? rows.map(e => `
+      <div class="crow ${e.cls}" data-kind="${e.kind}" data-id="${escapeHtml(e.id)}"${e.color ? ` style="--chip-color:${e.color}"` : ""}>
+        <span class="crow-bar"></span>
+        <div class="crow-main">
+          <div class="crow-title">${escapeHtml(e.title)}</div>
+          <div class="crow-meta">${e.allDay ? escapeHtml(t("common.all_day")) : escapeHtml(e.time)}</div>
+        </div>
+      </div>`).join("")
+    : wEmpty(t("cal.empty_short"));
+  return widget("📅", t("fab.event"), rows.length, body);
+}
+
+function wTasks(dISO){
+  const cs = state.chores.filter(c => c.dueDate === dISO);
+  const body = cs.length
+    ? cs.map(c => {
+        const done = c.completed || c.completionDate === dISO;
+        const p = profileById(c.assignee);
+        return `
+        <div class="wrow task-row" data-taskid="${escapeHtml(c.id)}">
+          <button class="check ${done ? "checked" : ""}" data-taskcheck aria-label="${escapeHtml(c.title)}"></button>
+          <div class="crow-main">
+            <div class="crow-title${done ? " struck" : ""}">${escapeHtml(c.title)}</div>
+            ${p ? `<div class="crow-meta" style="color:${p.color}">${escapeHtml(p.name)}</div>` : ""}
+          </div>
+          ${c.isKidChore && c.points ? `<span class="badge points">${escapeHtml(t("chores.points", { n: c.points }))}</span>` : ""}
+        </div>`;
+      }).join("")
+    : wEmpty(t("chores.none_today"));
+  return widget("✅", t("nav.chores"), cs.length, body);
+}
+
+function wMeals(dISO){
+  const order = ["breakfast", "lunch", "dinner", "snack"];
+  const ms = state.meals.filter(m => m.date === dISO)
+    .sort((a, b) => order.indexOf(a.mealType) - order.indexOf(b.mealType));
+  const body = ms.length
+    ? ms.map(m => `
+      <div class="wrow meal-row" data-mealid="${escapeHtml(m.id)}">
+        <span class="meal-tag">${escapeHtml(t("meal." + m.mealType))}</span>
+        <div class="crow-title">${escapeHtml(m.description || "")}</div>
+      </div>`).join("")
+    : wEmpty(t("meal.none_today"));
+  return widget("🍽️", t("nav.meal"), ms.length, body);
+}
+
+function wGrocery(){
+  const items = state.groceryItems.filter(i => !i.checked)
+    .sort((a, b) => (a.addedDate || 0) - (b.addedDate || 0));
+  const shown = items.slice(0, 8);
+  const body = items.length
+    ? shown.map(i => `
+        <div class="wrow g-row" data-gid="${escapeHtml(i.id)}">
+          <button class="check check-sm" data-gcheck aria-label="${escapeHtml(i.name)}"></button>
+          <div class="crow-title">${escapeHtml(i.name)}</div>
+        </div>`).join("") +
+        (items.length > shown.length ? `<div class="wrow-more">+${items.length - shown.length}</div>` : "")
+    : wEmpty(t("grocery.empty"));
+  return widget("🛒", t("nav.grocery"), items.length, body);
 }
 
 function miniMonth(selISO){
@@ -336,6 +423,32 @@ function onRootClick(e){
 
   const step = e.target.closest("[data-step]");
   if (step){ doStep(Number(step.dataset.step)); return; }
+
+  /* agenda widget interactions */
+  const tCheck = e.target.closest("[data-taskcheck]");
+  if (tCheck){
+    const c = state.chores.find(x => x.id === tCheck.closest("[data-taskid]").dataset.taskid);
+    if (c){ tCheck.classList.toggle("checked"); toggleChore(c).catch(() => toast(t("common.error"))); }
+    return;
+  }
+  const taskRow = e.target.closest("[data-taskid]");
+  if (taskRow){
+    const c = state.chores.find(x => x.id === taskRow.dataset.taskid);
+    if (c) openChoreForm(c);
+    return;
+  }
+  const gCheck = e.target.closest("[data-gcheck]");
+  if (gCheck){
+    gCheck.classList.add("checked");
+    update("groceryItems", gCheck.closest("[data-gid]").dataset.gid, { checked: true }).catch(() => {});
+    return;
+  }
+  const mealRow = e.target.closest("[data-mealid]");
+  if (mealRow){
+    const m = state.meals.find(x => x.id === mealRow.dataset.mealid);
+    if (m) openMealForm(m.date, m.mealType, m);
+    return;
+  }
 
   const crow = e.target.closest(".crow");
   if (crow){ openItemEditor(crow.dataset.kind, crow.dataset.id); return; }

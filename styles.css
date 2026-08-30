@@ -1019,8 +1019,8 @@ main{
 }
 .cal-step{
   border: 1px solid var(--line);
-  background: var(--card);
-  border-radius: 9px;
+  background: var(--bg-2);
+  border-radius: 10px;
   min-width: 32px;
   height: 36px;
   font-size: 17px;
@@ -1031,10 +1031,12 @@ main{
   justify-content: center;
   flex-shrink: 0;
 }
+.cal-step:hover{ background: var(--line); }
 .cal-step:active{ transform: translateY(1px); }
 .cal-today-btn{
   display: none;                /* phone: tap the date label to jump to today */
-  padding: 0 10px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 700;
 }
@@ -1059,11 +1061,12 @@ main{
 .cal-viewdial-btn{
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid var(--line-strong);
+  gap: 5px;
+  border: 1px solid var(--line);
   background: var(--card);
+  box-shadow: var(--shadow-sm);
   border-radius: var(--radius-pill);
-  padding: 0 10px;
+  padding: 0 12px;
   height: 36px;
   font-size: 13px;
   font-weight: 700;
@@ -1072,16 +1075,16 @@ main{
   white-space: nowrap;
 }
 .cal-viewdial-btn:active{ transform: translateY(1px); }
-.vd-caret{ font-size: 11px; color: var(--text-soft); transition: transform .2s ease; }
+.vd-caret{ font-size: 10px; color: var(--text-soft); transition: transform .2s ease; }
 .cal-viewdial.open .vd-caret{ transform: rotate(180deg); }
 .cal-viewdial-menu{
   position: absolute;
-  right: calc(100% + 8px);
+  right: calc(100% + 6px);
   top: 50%;
   display: flex;
   gap: 2px;
   z-index: 6;
-  background: var(--card);
+  background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
   padding: 3px;
@@ -1101,22 +1104,22 @@ main{
   border: none;
   background: none;
   border-radius: var(--radius-pill);
-  padding: 0 13px;
-  height: 34px;
+  padding: 7px 12px;
+  min-height: 34px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-soft);
   cursor: pointer;
   white-space: nowrap;
 }
-.vd-opt:hover{ background: var(--bg-2); color: var(--text-dark); }
+.vd-opt:hover{ background: var(--card); color: var(--text-dark); box-shadow: var(--shadow-sm); }
 .vd-opt:active{ transform: translateY(1px); }
 .cal-sync-mini{
   display: none;                 /* phone: manage sync from Settings */
   width: 36px; height: 36px;
   border: 1px solid var(--line);
-  background: var(--card);
-  border-radius: 9px;
+  background: var(--bg-2);
+  border-radius: 10px;
   font-size: 14px;
   cursor: pointer;
   flex-shrink: 0;
@@ -1286,9 +1289,73 @@ main{
 .day-view .crow{ padding: 13px 14px; margin-bottom: 8px; }
 .day-view .crow-title{ font-size: 15px; }
 
-/* ---- Agenda ---- */
+/* ---- Agenda dashboard ---- */
 .agenda{ display: flex; flex-direction: column; gap: 12px; }
-.agenda-cal{ padding: 12px; }
+.agenda-side{ padding: 12px; }
+.agenda-main{ display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.agenda-day{ font-size: 15px; font-weight: 700; padding: 2px 2px 0; }
+.agenda-widgets{ display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+.widget{ padding: 0; overflow: hidden; }
+.widget-head{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.widget-ico{ font-size: 15px; }
+.widget-count{
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-soft);
+  background: var(--bg-2);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+}
+.widget-body{ padding: 0 6px 6px; }
+.widget-body > *{ margin: 0; }
+.widget-empty{ padding: 10px 10px 14px; text-align: center; color: var(--text-soft); font-size: 12px; }
+.wrow{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 8px;
+}
+.wrow + .wrow{ border-top: 1px solid var(--line); }
+.wrow .crow-title{ font-weight: 600; font-size: 14px; }
+.wrow .crow-title.struck{ text-decoration: line-through; color: var(--text-soft); }
+.wrow .crow-meta{ font-family: var(--font-mono); font-size: 11px; color: var(--text-soft); margin-top: 1px; }
+.wrow .crow-main{ flex: 1; min-width: 0; }
+.wrow .check{ --sz: 24px; border-width: 2px; }
+.wrow .check.check-sm{ --sz: 22px; }
+.task-row, .meal-row, .g-row{ cursor: pointer; }
+.meal-tag{
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+  background: var(--bg-2);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+.wrow-more{ padding: 8px; text-align: center; color: var(--text-soft); font-size: 12px; }
+
+.widget .crow{
+  background: none;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 9px 8px;
+  border-radius: 8px;
+}
+.widget .crow + .crow{ border-top: 1px solid var(--line); }
+
 .mini-dow{
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -1324,8 +1391,6 @@ main{
   background: var(--accent);
 }
 .mini-day.sel .mini-dot{ background: #fff; }
-.agenda-detail{ padding: 14px; }
-.agenda-detail-head{ font-weight: 700; font-size: 16px; margin-bottom: 10px; }
 
 /* ============================================================
    "+" SPEED-DIAL  (vertical fan of labelled actions)
@@ -1665,8 +1730,12 @@ main{
   .crow-title{ font-size: 15px; }
 
   .agenda{ flex-direction: row; align-items: flex-start; }
-  .agenda-cal{ flex: 0 0 360px; }
-  .agenda-detail{ flex: 1; }
+  .agenda-side{ flex: 0 0 320px; position: sticky; top: 0; }
+  .agenda-main{ flex: 1; }
+  .agenda-day{ font-size: 20px; }
+  .agenda-widgets{ grid-template-columns: 1fr 1fr; }
+  .widget-head{ font-size: 15px; }
+  .wrow .crow-title{ font-size: 15px; }
   .mini-day{ font-size: 15px; }
 
   #fabWrap{ right: 30px; bottom: 30px; }

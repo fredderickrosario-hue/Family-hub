@@ -15,7 +15,7 @@ export { t };
 /* ---------- State ---------- */
 export const state = {
   viewDate: new Date(),      // calendar cursor (month/week/day pivot)
-  calView: localStorage.getItem("familyhub.calView") || "month", // month|week|day|agenda
+  calView: localStorage.getItem("familyhub.calView") || "agenda", // month|week|day|agenda
   selectedDateISO: null,     // day open in the day sheet
   events: [],                // {id, title, date, time, notes}
   chores: [],                // {id, title, assignee, isKidChore, points, dueDate,

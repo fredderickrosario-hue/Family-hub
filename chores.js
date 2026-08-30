@@ -76,7 +76,7 @@ async function awardPoints(profileId, delta){
 }
 
 /* ---------- Complete / undo ---------- */
-async function toggleChore(c){
+export async function toggleChore(c){
   const today = todayISO();
   if (isRecurring(c)){
     if (c.completionDate === today){

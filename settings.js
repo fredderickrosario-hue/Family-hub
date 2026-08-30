@@ -12,7 +12,7 @@ import {
   gcalListCalendars, selectedCals, setSelectedCals
 } from "./gcal.js";
 
-const APP_VERSION = "9";                 // keep in step with service-worker CACHE_NAME
+const APP_VERSION = "10";                 // keep in step with service-worker CACHE_NAME
 
 let panel;
 let calList = null;                       // cached calendar list from the relay
@@ -64,7 +64,7 @@ function render(){
         <span class="set-label">${escapeHtml(t("set.default_view"))}</span>
         <select class="set-select" data-pref="familyhub.calView">
           ${["month","week","day","agenda"].map(v =>
-            `<option value="${v}" ${pref("familyhub.calView","month") === v ? "selected" : ""}>${escapeHtml(t("cal." + v))}</option>`).join("")}
+            `<option value="${v}" ${pref("familyhub.calView","agenda") === v ? "selected" : ""}>${escapeHtml(t("cal." + v))}</option>`).join("")}
         </select>
       </div>
       <div class="set-row">
