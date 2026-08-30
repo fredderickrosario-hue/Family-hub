@@ -4,46 +4,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Family Hub</title>
-<meta name="theme-color" content="#1F2421">
+<meta name="theme-color" content="#FAFAF9">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div id="app">
 
   <header class="hub-header">
-    <h1>Family Hub</h1>
-    <span class="date-readout" id="headerDate">--</span>
+    <div class="hub-header-main">
+      <h1>Family Hub</h1>
+      <span class="date-readout" id="headerDate">--</span>
+    </div>
   </header>
 
-  <nav class="tab-panel" id="tabPanel">
+  <nav class="tab-nav" id="tabNav">
     <button class="tab-btn active" data-tab="main">
-      <span class="led" id="ledMain"></span>
-      <span class="label">Main</span>
+      <span class="tab-icon" aria-hidden="true">📅</span>
+      <span class="tab-label">Calendar</span>
+      <span class="tab-led" id="ledMain"></span>
     </button>
     <button class="tab-btn" data-tab="chores">
-      <span class="led" id="ledChores"></span>
-      <span class="label">Chores</span>
+      <span class="tab-icon" aria-hidden="true">✅</span>
+      <span class="tab-label">Chores</span>
+      <span class="tab-led" id="ledChores"></span>
     </button>
     <button class="tab-btn" data-tab="budget">
-      <span class="led" id="ledBudget"></span>
-      <span class="label">Budget</span>
+      <span class="tab-icon" aria-hidden="true">💰</span>
+      <span class="tab-label">Budget</span>
+      <span class="tab-led" id="ledBudget"></span>
     </button>
     <button class="tab-btn" data-tab="meal">
-      <span class="led" id="ledMeal"></span>
-      <span class="label">Meal</span>
+      <span class="tab-icon" aria-hidden="true">🍽️</span>
+      <span class="tab-label">Meals</span>
+      <span class="tab-led" id="ledMeal"></span>
     </button>
     <button class="tab-btn" data-tab="grocery">
-      <span class="led" id="ledGrocery"></span>
-      <span class="label">Grocery</span>
+      <span class="tab-icon" aria-hidden="true">🛒</span>
+      <span class="tab-label">Grocery</span>
+      <span class="tab-led" id="ledGrocery"></span>
+    </button>
+    <button class="tab-btn" data-tab="family">
+      <span class="tab-icon" aria-hidden="true">👪</span>
+      <span class="tab-label">Family</span>
+      <span class="tab-led" id="ledFamily"></span>
     </button>
   </nav>
 
   <main>
     <!-- MAIN CALENDAR -->
     <section class="panel active" id="panel-main">
-      <div class="ticket">
+      <div class="card">
         <div class="cal-nav">
           <button id="calPrev" aria-label="Previous month">‹</button>
           <span class="cal-month-label" id="calMonthLabel">--</span>
@@ -52,55 +66,41 @@
         <div class="cal-grid" id="calDow"></div>
         <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
       </div>
-      <div class="ticket">
-        <div class="ticket-title">Legend</div>
-        <div class="entry-row" style="border:none;padding:4px 0;">
-          <span class="dot evt"></span><span class="entry-meta">Personal event</span>
-        </div>
-        <div class="entry-row" style="border:none;padding:4px 0;">
-          <span class="dot gcal"></span><span class="entry-meta">Google Calendar</span>
-        </div>
-        <div class="entry-row" style="border:none;padding:4px 0;">
-          <span class="dot chore"></span><span class="entry-meta">Chore due</span>
-        </div>
-        <div class="entry-row" style="border:none;padding:4px 0;">
-          <span class="dot budget"></span><span class="entry-meta">Budget due</span>
+      <div class="card" style="margin-top:12px;">
+        <div class="section-title" style="margin:0 0 10px;">Legend</div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;">
+          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot evt"></span>Event</span>
+          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot chore"></span>Chore due</span>
+          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot meal"></span>Meal planned</span>
+          <span class="entry-meta" style="display:flex;align-items:center;gap:7px;"><span class="dot budget"></span>Budget due</span>
         </div>
       </div>
     </section>
 
-    <!-- OTHER TABS: shells only for now -->
-    <section class="panel" id="panel-chores">
-      <div class="placeholder-panel">CHORES — wiring this in next pass</div>
-    </section>
-    <section class="panel" id="panel-budget">
-      <div class="placeholder-panel">BUDGET — wiring this in next pass</div>
-    </section>
-    <section class="panel" id="panel-meal">
-      <div class="placeholder-panel">MEAL — wiring this in next pass</div>
-    </section>
-    <section class="panel" id="panel-grocery">
-      <div class="placeholder-panel">GROCERY — wiring this in next pass</div>
-    </section>
+    <!-- Tab panels populated by their modules -->
+    <section class="panel" id="panel-chores"></section>
+    <section class="panel" id="panel-budget"></section>
+    <section class="panel" id="panel-meal"></section>
+    <section class="panel" id="panel-grocery"></section>
+    <section class="panel" id="panel-family"></section>
   </main>
 
 </div>
 
 <!-- Day detail bottom sheet -->
 <div class="sheet-backdrop" id="sheetBackdrop">
-  <div class="sheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Day details">
+    <div class="sheet-grip"></div>
     <div class="sheet-header">
       <h2 id="sheetDateLabel">--</h2>
       <button class="sheet-close" id="sheetClose" aria-label="Close">&times;</button>
     </div>
     <div id="sheetEntries"></div>
-    <button class="btn-toggle" id="showAddForm">+ Add to this day</button>
-    <form class="add-form" id="addEventForm" style="display:none;">
-      <input type="text" id="newEventTitle" placeholder="Title" required>
-      <input type="time" id="newEventTime">
-      <textarea id="newEventNotes" placeholder="Notes (optional)" rows="2"></textarea>
-      <button type="submit" class="btn-primary">Save event</button>
-    </form>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      <button class="btn-add" data-add="event"><span class="plus">+</span> Event</button>
+      <button class="btn-add" data-add="chore"><span class="plus">+</span> Chore</button>
+      <button class="btn-add" data-add="meal"><span class="plus">+</span> Meal</button>
+    </div>
   </div>
 </div>
 

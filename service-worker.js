@@ -1,13 +1,20 @@
 // Bump this on every deploy so devices pick up the new shell.
-const CACHE_NAME = "family-hub-v1";
+const CACHE_NAME = "family-hub-v3";
 
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./styles.css",
-  "./app.js",
-  "./firebase-config.js",
   "./manifest.json",
+  "./firebase-config.js",
+  "./state.js",
+  "./ui.js",
+  "./app.js",
+  "./chores.js",
+  "./budget.js",
+  "./meals.js",
+  "./grocery.js",
+  "./profiles.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
 ];
@@ -29,13 +36,22 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // App shell: cache-first. Firestore/Google traffic: always network
-  // (never intercept — that data needs to be live).
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin){
-    return;
-  }
+
+  // Only manage our own origin. Firestore / Google traffic must stay live.
+  if (url.origin !== self.location.origin || event.request.method !== "GET") return;
+
+  // Stale-while-revalidate: serve cache immediately, refresh in the background.
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(event.request);
+      const network = fetch(event.request)
+        .then((res) => {
+          if (res && res.ok) cache.put(event.request, res.clone());
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
   );
 });
