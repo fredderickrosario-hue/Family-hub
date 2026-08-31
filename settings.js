@@ -13,7 +13,7 @@ import {
 } from "./gcal.js";
 import { icsConfig, openIcsImport } from "./ics.js";
 
-const APP_VERSION = "12";                 // keep in step with service-worker CACHE_NAME
+const APP_VERSION = "13";                 // keep in step with service-worker CACHE_NAME
 
 let panel;
 let calList = null;                       // cached calendar list from the relay
