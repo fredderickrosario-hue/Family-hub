@@ -55,6 +55,14 @@ export function initCalendar(){
 const KIND_ORDER = { event: 0, gcal: 1, meal: 2, chore: 3, budget: 4 };
 const MEAL_ORDER = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
 
+function externalEvents(dISO){
+  const out = [];
+  if (gcalEnabled()) out.push(...state.gcalEvents.filter(e => e.date === dISO));
+  if (state.icsEvents && state.icsEvents.length)
+    out.push(...state.icsEvents.filter(e => e.date === dISO));
+  return out;
+}
+
 function itemsForDate(dateISO){
   const out = [];
 
@@ -63,13 +71,11 @@ function itemsForDate(dateISO){
     time: e.time || "", allDay: !e.time, raw: e
   }));
 
-  if (gcalEnabled()){
-    state.gcalEvents.filter(e => e.date === dateISO).forEach(e => out.push({
-      kind: "gcal", cls: "gcal", title: e.title || "(busy)",
-      time: e.time || "", allDay: !!e.allDay, sub: e.location || "",
-      color: e.color || null, raw: e
-    }));
-  }
+  externalEvents(dateISO).forEach(e => out.push({
+    kind: "gcal", cls: "gcal", title: e.title || "(busy)",
+    time: e.time || "", allDay: !!e.allDay, sub: e.location || "",
+    color: e.color || null, raw: e
+  }));
 
   state.meals.filter(m => m.date === dateISO).forEach(m => out.push({
     kind: "meal", cls: "meal", title: m.description || "(meal)",
@@ -271,15 +277,15 @@ function agendaView(){
   const head = Math.abs(diff) <= 1 ? `${relativeDay(sel)} · ${full}` : full;
   return `
     <div class="agenda">
-      <div class="agenda-side card">${miniMonth(sel)}</div>
-      <div class="agenda-main">
-        <div class="agenda-day">${escapeHtml(head)}</div>
-        <div class="agenda-widgets">
-          ${wEvents(sel)}
-          ${wTasks(sel)}
-          ${wMeals(sel)}
-          ${wGrocery(sel)}
-        </div>
+      <div class="agenda-left">
+        <div class="agenda-side card w-side">${miniMonth(sel)}</div>
+        ${wGrocery(sel)}
+        ${wMeals(sel)}
+      </div>
+      <div class="agenda-right">
+        <div class="agenda-day w-day">${escapeHtml(head)}</div>
+        ${wEvents(sel)}
+        ${wTasks(sel)}
       </div>
     </div>`;
 }
@@ -298,7 +304,7 @@ function wEvents(dISO){
   const rows = [];
   state.events.filter(e => e.date === dISO).forEach(e =>
     rows.push({ id: e.id, kind: "event", cls: "evt", title: e.title || "(untitled)", time: e.time || "", allDay: !e.time }));
-  if (gcalEnabled()) state.gcalEvents.filter(e => e.date === dISO).forEach(e =>
+  externalEvents(dISO).forEach(e =>
     rows.push({ id: e.id, kind: "gcal", cls: "gcal", title: e.title || "(busy)", time: e.time || "", allDay: !!e.allDay, color: e.color }));
   rows.sort((a, b) => (a.allDay ? 1 : 0) - (b.allDay ? 1 : 0) || (a.time || "").localeCompare(b.time || ""));
 
@@ -312,7 +318,7 @@ function wEvents(dISO){
         </div>
       </div>`).join("")
     : wEmpty(t("cal.empty_short"));
-  return widget("📅", t("fab.event"), rows.length, body);
+  return widget("📅", t("fab.event"), rows.length, body, "w-events");
 }
 
 function wTasks(dISO){
@@ -332,7 +338,7 @@ function wTasks(dISO){
         </div>`;
       }).join("")
     : wEmpty(t("chores.none_today"));
-  return widget("✅", t("nav.chores"), cs.length, body);
+  return widget("✅", t("nav.chores"), cs.length, body, "w-tasks");
 }
 
 function wMeals(dISO){
@@ -346,7 +352,7 @@ function wMeals(dISO){
         <div class="crow-title">${escapeHtml(m.description || "")}</div>
       </div>`).join("")
     : wEmpty(t("meal.none_today"));
-  return widget("🍽️", t("nav.meal"), ms.length, body);
+  return widget("🍽️", t("nav.meal"), ms.length, body, "w-meals");
 }
 
 function wGrocery(){
@@ -361,7 +367,7 @@ function wGrocery(){
         </div>`).join("") +
         (items.length > shown.length ? `<div class="wrow-more">+${items.length - shown.length}</div>` : "")
     : wEmpty(t("grocery.empty"));
-  return widget("🛒", t("nav.grocery"), items.length, body);
+  return widget("🛒", t("nav.grocery"), items.length, body, "w-grocery");
 }
 
 function miniMonth(selISO){
@@ -471,7 +477,8 @@ function openItemEditor(kind, id){
     const ev = state.events.find(x => x.id === id);
     if (ev) openEventForm(ev);
   } else if (kind === "gcal"){
-    const ev = state.gcalEvents.find(x => x.id === id);
+    const ev = state.gcalEvents.find(x => x.id === id) ||
+               (state.icsEvents || []).find(x => x.id === id);
     if (ev) showGcalEvent(ev);
   } else if (kind === "chore"){
     const c = state.chores.find(x => x.id === id);
@@ -579,7 +586,7 @@ function buildFab(){
         </button>`).join("")}
     </div>
     <button class="fab" id="fabBtn" aria-label="${escapeHtml(t("common.add"))}" aria-haspopup="true" aria-expanded="false">
-      <span class="fab-plus">+</span>
+      <span class="fab-plus" aria-hidden="true"></span>
     </button>`;
   document.body.appendChild(wrap);
 

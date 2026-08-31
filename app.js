@@ -3,9 +3,10 @@
    Header, tab switching, module init. Each tab module owns its
    own panel and pulls from state.js.
    ============================================================ */
-import { onStateChange, initSync, DOW, MONTHS, todayISO } from "./state.js";
+import { state, onStateChange, nudge, initSync, DOW, MONTHS, todayISO } from "./state.js";
 import { t } from "./i18n.js";
 import { initTheme } from "./theme.js";
+import { icsEventList, refreshIcs } from "./ics.js";
 
 import { initCalendar } from "./calendar.js";
 import { initChores, choresLed } from "./chores.js";
@@ -71,6 +72,10 @@ onStateChange(() => {
 });
 
 initSync();
+
+/* imported iCal calendar: show the cached copy now, refresh in the background */
+state.icsEvents = icsEventList();
+refreshIcs().then(ok => { if (ok) nudge(); });
 
 /* refresh "today" at midnight rollover */
 let lastToday = todayISO();

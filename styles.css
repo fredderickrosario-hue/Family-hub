@@ -107,8 +107,15 @@
 
 *{ box-sizing: border-box; }
 html, body{ height: 100%; }
+html{
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;   /* no double-tap zoom */
+}
 body{
   margin: 0;
+  touch-action: manipulation;
+  overscroll-behavior-y: contain;
   background: var(--bg);
   color: var(--text-dark);
   font-family: var(--font);
@@ -1290,13 +1297,17 @@ main{
 .day-view .crow-title{ font-size: 15px; }
 
 /* ---- Agenda dashboard ---- */
+/* phone: one column. day header, mini-cal, then events / tasks / meals / grocery */
 .agenda{ display: flex; flex-direction: column; gap: 12px; }
-.agenda-side{ padding: 10px; }
-.agenda-side .mini-day{ aspect-ratio: 1 / 0.68; font-size: 11px; border-radius: 6px; }
+.agenda-left, .agenda-right{ display: contents; }
+.w-day{ order: 0; font-size: 15px; font-weight: 700; padding: 2px 2px 0; }
+.agenda-side{ order: 1; padding: 10px; }
+.w-events{ order: 2; }
+.w-tasks{ order: 3; }
+.w-meals{ order: 4; }
+.w-grocery{ order: 5; }
+.agenda-side .mini-day{ aspect-ratio: 1 / 0.66; font-size: 11px; border-radius: 6px; }
 .agenda-side .mini-dot{ bottom: 2px; width: 3px; height: 3px; }
-.agenda-main{ display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.agenda-day{ font-size: 15px; font-weight: 700; padding: 2px 2px 0; }
-.agenda-widgets{ display: grid; grid-template-columns: 1fr; gap: 12px; }
 
 .widget{ padding: 0; overflow: hidden; }
 .widget-head{
@@ -1432,9 +1443,24 @@ main{
   z-index: 2;
 }
 .fab:active{ transform: scale(.94); }
-.fab-plus{ font-size: 30px; line-height: 1; transition: transform .25s ease; }
+.fab-plus{
+  position: relative;
+  width: 22px;
+  height: 22px;
+  font-size: 0;
+  transition: transform .25s cubic-bezier(.2,.9,.3,1.3);
+}
+.fab-plus::before,
+.fab-plus::after{
+  content: "";
+  position: absolute;
+  background: currentColor;
+  border-radius: 2px;
+}
+.fab-plus::before{ left: 50%; top: 0; width: 3px; height: 100%; transform: translateX(-50%); }
+.fab-plus::after{ top: 50%; left: 0; height: 3px; width: 100%; transform: translateY(-50%); }
 #fabWrap.open .fab{ background: var(--accent-ink); }
-#fabWrap.open .fab-plus{ transform: rotate(135deg); }
+#fabWrap.open .fab-plus{ transform: rotate(45deg); }
 
 .fab-menu{
   position: absolute;
@@ -1643,7 +1669,9 @@ main{
 /* ============================================================
    LANDSCAPE / TABLET / KITCHEN DISPLAY  (>= 768px)
    ============================================================ */
-@media (min-width: 768px){
+/* Sidebar layout only on genuinely large screens — a phone in landscape
+   is wide but short, and should keep the mobile bottom-nav layout. */
+@media (min-width: 768px) and (min-height: 560px){
   body{ font-size: 18px; }
 
   #app{
@@ -1731,18 +1759,20 @@ main{
   .week-day-head{ flex-direction: column; align-items: center; gap: 2px; }
   .crow-title{ font-size: 15px; }
 
-  .agenda{ flex-direction: row; align-items: flex-start; }
-  .agenda-side{ flex: 0 0 320px; position: sticky; top: 0; }
-  .agenda-side .mini-day{ aspect-ratio: 1; font-size: 14px; border-radius: 7px; }
-  .agenda-main{ flex: 1; }
-  .agenda-day{ font-size: 20px; }
-  .agenda-widgets{ grid-template-columns: 1fr 1fr; }
+  /* wide: 30% / 70% columns. left = mini-cal + grocery + meals, right = day + events + tasks */
+  .agenda{ flex-direction: row; align-items: flex-start; gap: 16px; }
+  .agenda-left, .agenda-right{ display: flex; flex-direction: column; gap: 12px; }
+  .agenda-left{ flex: 0 0 30%; }
+  .agenda-right{ flex: 1; min-width: 0; }
+  .w-day, .agenda-side, .w-events, .w-tasks, .w-meals, .w-grocery{ order: 0; }
+  .agenda-side .mini-day{ aspect-ratio: 1 / 0.82; font-size: 13px; border-radius: 7px; }
+  .w-day{ font-size: 20px; }
   .widget-head{ font-size: 15px; }
   .wrow .crow-title{ font-size: 15px; }
 
   #fabWrap{ right: 30px; bottom: 30px; }
   .fab{ width: 64px; height: 64px; }
-  .fab-plus{ font-size: 34px; }
+  .fab-plus{ width: 26px; height: 26px; }
 }
 
 @media (min-width: 1000px){

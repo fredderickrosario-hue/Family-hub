@@ -11,8 +11,9 @@ import {
   gcalEnabled, gcalConfig, openGcalSettings, bustGcalCache,
   gcalListCalendars, selectedCals, setSelectedCals
 } from "./gcal.js";
+import { icsConfig, openIcsImport } from "./ics.js";
 
-const APP_VERSION = "11";                 // keep in step with service-worker CACHE_NAME
+const APP_VERSION = "12";                 // keep in step with service-worker CACHE_NAME
 
 let panel;
 let calList = null;                       // cached calendar list from the relay
@@ -105,11 +106,24 @@ function segBtn(seg, val, label, current){
   return `<button class="seg-btn${String(current) === val ? " active" : ""}" data-seg-val="${val}">${escapeHtml(label)}</button>`;
 }
 
+function icsBlock(){
+  const c = icsConfig();
+  const status = c && c.events && c.events.length
+    ? `<p class="set-hint">${escapeHtml(t("ics.imported", { n: c.events.length, name: c.name || "calendar" }))}</p>`
+    : "";
+  return `
+    ${status}
+    <button class="set-action" data-act="import-ics">
+      <span>${escapeHtml(t("set.import_phone"))}</span><span class="set-chevron">›</span>
+    </button>`;
+}
+
 function renderCalendars(){
   if (!gcalEnabled()){
     return `
       <p class="set-hint">${escapeHtml(t("set.not_connected"))}</p>
-      <button class="set-primary" data-act="connect">${escapeHtml(t("set.sync_new"))}</button>`;
+      <button class="set-primary" data-act="connect">${escapeHtml(t("set.sync_new"))}</button>
+      ${icsBlock()}`;
   }
   let rows = "";
   if (calList){
@@ -135,7 +149,8 @@ function renderCalendars(){
     <div class="set-actions">
       <button class="set-primary" data-act="connect">${escapeHtml(t("set.reconfigure"))}</button>
       <button class="set-ghost" data-act="refresh-cals">↻</button>
-    </div>`;
+    </div>
+    ${icsBlock()}`;
 }
 
 /* ---------- Calendar list loading ---------- */
@@ -168,6 +183,8 @@ function onClick(e){
     openGcalSettings(() => { calList = null; if (gcalEnabled()) loadCalendars(); else render(); rerenderCalendar(); });
   } else if (act === "refresh-cals"){
     calList = null; render(); loadCalendars();
+  } else if (act === "import-ics"){
+    openIcsImport(() => { render(); rerenderCalendar(); });
   } else if (act === "update"){
     checkForUpdates();
   } else if (act === "reset-weather"){

@@ -14,9 +14,11 @@
  *     Deploy, authorise, copy the Web app URL (ends in /exec)
  *  5. Family Hub -> Settings -> Synced calendars -> paste URL + token
  *
- * v2 adds ?list=1 (enumerate calendars) and ?cals=id1,id2
- * (limit which calendars are returned). If you deployed v1,
- * redeploy this: Deploy -> Manage deployments -> edit -> New version.
+ * v3 adds ?list=1 (enumerate calendars), ?cals=id1,id2 (limit which
+ * calendars are returned), and ?ics=<url> (fetch an external iCal
+ * feed so the app can import Apple / Outlook / Samsung calendars).
+ * If you deployed an older version, redeploy this:
+ * Deploy -> Manage deployments -> edit -> Version: New version.
  */
 
 const SHARED_TOKEN = 'CHANGE_ME_to_a_long_random_string';
@@ -24,6 +26,17 @@ const SHARED_TOKEN = 'CHANGE_ME_to_a_long_random_string';
 function doGet(e){
   const p = (e && e.parameter) || {};
   if (p.token !== SHARED_TOKEN) return _json({ error: 'unauthorized' });
+
+  // ?ics=<url>  ->  fetch an external iCal feed (CORS proxy for the app)
+  if (p.ics){
+    try {
+      var resp = UrlFetchApp.fetch(p.ics, { muteHttpExceptions: true, followRedirects: true });
+      return ContentService.createTextOutput(resp.getContentText())
+        .setMimeType(ContentService.MimeType.TEXT);
+    } catch (err){
+      return _json({ error: String(err) });
+    }
+  }
 
   // ?list=1  ->  the calendars this account can see
   if (p.list){

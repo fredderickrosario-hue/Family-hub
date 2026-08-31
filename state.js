@@ -26,7 +26,8 @@ export const state = {
   meals: [],                 // {id, date, mealType, description, ingredients, notes}
   groceryItems: [],          // {id, name, checked, addedDate, category}
   profiles: [],              // {id, name, color, isKid, avatar, points}
-  gcalEvents: []             // read-only, from Google Calendar via the relay
+  gcalEvents: [],            // read-only, from Google Calendar via the relay
+  icsEvents: []              // read-only, from an imported iCal (.ics) URL
 };
 
 /* ---------- Pub/sub ---------- */
