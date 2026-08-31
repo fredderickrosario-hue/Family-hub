@@ -7,6 +7,8 @@ import { state, onStateChange, nudge, initSync, DOW, MONTHS, todayISO } from "./
 import { t } from "./i18n.js";
 import { initTheme } from "./theme.js";
 import { icsEventList, refreshIcs } from "./ics.js";
+import { initUpdates, onUpdateReady, applyUpdate } from "./update.js";
+import { toast } from "./ui.js";
 
 import { initCalendar } from "./calendar.js";
 import { initChores, choresLed } from "./chores.js";
@@ -35,7 +37,7 @@ function renderHeaderDate(){
 /* ---------- Tab switching ---------- */
 document.getElementById("tabNav").addEventListener("click", (e) => {
   const btn = e.target.closest(".tab-btn");
-  if (!btn) return;
+  if (!btn || !btn.dataset.tab) return;          // ignore the update bell
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
   btn.classList.add("active");
@@ -84,9 +86,14 @@ setInterval(() => {
   if (t !== lastToday){ lastToday = t; renderHeaderDate(); }
 }, 60000);
 
-/* ---------- Service worker ---------- */
-if ("serviceWorker" in navigator){
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(console.warn);
+/* ---------- Update bell ---------- */
+initUpdates();
+const bell = document.getElementById("navBell");
+onUpdateReady(() => { if (bell) bell.hidden = false; nudge(); });
+if (bell){
+  bell.addEventListener("click", async () => {
+    bell.classList.add("working");
+    toast(t("set.updating"));
+    await applyUpdate();          // reloads on controllerchange
   });
 }

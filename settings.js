@@ -12,8 +12,9 @@ import {
   gcalListCalendars, selectedCals, setSelectedCals
 } from "./gcal.js";
 import { icsConfig, openIcsImport } from "./ics.js";
+import { isUpdateReady, applyUpdate } from "./update.js";
 
-const APP_VERSION = "14";                 // keep in step with service-worker CACHE_NAME
+const APP_VERSION = "15";                 // keep in step with service-worker CACHE_NAME
 
 let panel;
 let calList = null;                       // cached calendar list from the relay
@@ -84,8 +85,9 @@ function render(){
 
     <div class="set-section">
       <div class="set-section-title">${escapeHtml(t("set.data"))}</div>
-      <button class="set-action" data-act="update">
-        <span>${escapeHtml(t("set.check_updates"))}</span><span class="set-chevron">›</span>
+      <button class="set-action${isUpdateReady() ? " ready" : ""}" data-act="update">
+        <span>${escapeHtml(isUpdateReady() ? t("set.update_now") : t("set.check_updates"))}</span>
+        <span class="set-chevron">${isUpdateReady() ? "🔔" : "›"}</span>
       </button>
       <button class="set-action" data-act="reset-weather">
         <span>${escapeHtml(t("set.reset_weather"))}</span><span class="set-chevron">›</span>
@@ -218,15 +220,6 @@ function rerenderCalendar(){
 
 async function checkForUpdates(){
   toast(t("set.updating"));
-  try {
-    if ("serviceWorker" in navigator){
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.update().catch(() => {})));
-    }
-    if (window.caches){
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-  } catch {}
-  setTimeout(() => location.reload(), 400);
+  const applied = await applyUpdate();          // waiting SW -> reload; else checks
+  if (!applied) toast(t("set.up_to_date"));
 }

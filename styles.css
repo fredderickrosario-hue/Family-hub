@@ -233,6 +233,22 @@ input, select, textarea{ font-family: inherit; font-size: 16px; }
 }
 .tab-btn.active .tab-icon{ transform: translateY(-1px); }
 
+/* update bell — only rendered when a new version is waiting */
+.nav-bell{
+  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--accent) 14%, var(--tint-base));
+}
+.nav-bell .tab-icon{ animation: bell-ring 2.4s ease-in-out infinite; transform-origin: 50% 10%; }
+.nav-bell.working{ opacity: .55; pointer-events: none; }
+.nav-bell.working .tab-icon{ animation: none; }
+@keyframes bell-ring{
+  0%, 82%, 100%{ transform: rotate(0); }
+  86%{ transform: rotate(14deg); }
+  90%{ transform: rotate(-11deg); }
+  94%{ transform: rotate(7deg); }
+  98%{ transform: rotate(-3deg); }
+}
+
 /* ============================================================
    PANELS
    ============================================================ */
@@ -1609,6 +1625,7 @@ main{
   text-align: left;
 }
 .set-section-title + .set-action{ border-top: none; }
+.set-action.ready{ color: var(--accent-ink); font-weight: 700; }
 .set-chevron{ color: var(--text-soft); font-size: 18px; }
 
 .set-actions{ display: flex; gap: 8px; padding: 10px 0 14px; }

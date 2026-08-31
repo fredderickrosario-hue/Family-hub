@@ -25,6 +25,7 @@ const D = {
   en: {
     "nav.calendar": "Calendar", "nav.chores": "Chores", "nav.budget": "Budget",
     "nav.meal": "Meals", "nav.grocery": "Grocery", "nav.family": "Family", "nav.settings": "Settings",
+    "nav.update": "Update",
 
     "common.save": "Save", "common.delete": "Delete", "common.close": "Close",
     "common.clear": "Clear", "common.add": "Add", "common.cancel": "Cancel", "common.edit": "Edit",
@@ -110,7 +111,7 @@ const D = {
     "set.import_phone": "Import phone calendar",
     "set.not_connected": "Google Calendar isn't connected yet.",
     "set.reconfigure": "Relay settings", "set.calendars_on": "Calendars from your Google account",
-    "set.data": "Data & app", "set.check_updates": "Check for updates",
+    "set.data": "Data & app", "set.check_updates": "Check for updates", "set.update_now": "Update now — new version ready",
     "set.up_to_date": "You're on the latest version", "set.updating": "Updating…",
     "set.reset_weather": "Reset weather location",
     "set.about": "About", "set.version": "Version"
@@ -119,6 +120,7 @@ const D = {
   fr: {
     "nav.calendar": "Agenda", "nav.chores": "Tâches", "nav.budget": "Budget",
     "nav.meal": "Repas", "nav.grocery": "Épicerie", "nav.family": "Famille", "nav.settings": "Réglages",
+    "nav.update": "Mise à jour",
 
     "common.save": "Enregistrer", "common.delete": "Supprimer", "common.close": "Fermer",
     "common.clear": "Effacer", "common.add": "Ajouter", "common.cancel": "Annuler", "common.edit": "Modifier",
@@ -205,7 +207,7 @@ const D = {
     "set.import_phone": "Importer l’agenda du téléphone",
     "set.not_connected": "Google Agenda n’est pas encore connecté.",
     "set.reconfigure": "Réglages du relais", "set.calendars_on": "Agendas de votre compte Google",
-    "set.data": "Données & app", "set.check_updates": "Vérifier les mises à jour",
+    "set.data": "Données & app", "set.check_updates": "Vérifier les mises à jour", "set.update_now": "Mettre à jour — nouvelle version prête",
     "set.up_to_date": "Vous avez la dernière version", "set.updating": "Mise à jour…",
     "set.reset_weather": "Réinitialiser la localisation météo",
     "set.about": "À propos", "set.version": "Version"

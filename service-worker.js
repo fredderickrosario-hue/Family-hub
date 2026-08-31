@@ -1,5 +1,6 @@
-// Bump this on every deploy so devices pick up the new shell.
-const CACHE_NAME = "family-hub-v14";
+// Bump this on every deploy. A new version installs but WAITS —
+// the app shows a bell and applies it only when the user taps.
+const CACHE_NAME = "family-hub-v15";
 
 const SHELL_FILES = [
   "./",
@@ -12,6 +13,7 @@ const SHELL_FILES = [
   "./theme.js",
   "./ui.js",
   "./app.js",
+  "./update.js",
   "./calendar.js",
   "./weather.js",
   "./ics.js",
@@ -34,25 +36,26 @@ self.addEventListener("install", (event) => {
       cache.addAll(SHELL_FILES.map((u) => new Request(u, { cache: "reload" })))
     )
   );
-  self.skipWaiting();
+  // NOTE: no skipWaiting() — the new worker waits for the user's OK.
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
+});
+
+// The page posts this when the user taps the update bell.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-
-  // Only manage our own origin. Firestore / Google traffic must stay live.
   if (url.origin !== self.location.origin || event.request.method !== "GET") return;
 
-  // Stale-while-revalidate: serve cache immediately, refresh in the background.
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
       const cached = await cache.match(event.request);
