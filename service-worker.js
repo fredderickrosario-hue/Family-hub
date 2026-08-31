@@ -1,5 +1,5 @@
 // Bump this on every deploy so devices pick up the new shell.
-const CACHE_NAME = "family-hub-v13";
+const CACHE_NAME = "family-hub-v14";
 
 const SHELL_FILES = [
   "./",
@@ -28,7 +28,11 @@ const SHELL_FILES = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_FILES))
+    caches.open(CACHE_NAME).then((cache) =>
+      // {cache:"reload"} bypasses the HTTP cache so a version bump always
+      // pulls genuinely fresh files (GitHub Pages sends max-age=600).
+      cache.addAll(SHELL_FILES.map((u) => new Request(u, { cache: "reload" })))
+    )
   );
   self.skipWaiting();
 });
@@ -52,7 +56,7 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
       const cached = await cache.match(event.request);
-      const network = fetch(event.request)
+      const network = fetch(event.request, { cache: "no-cache" })
         .then((res) => {
           if (res && res.ok) cache.put(event.request, res.clone());
           return res;
